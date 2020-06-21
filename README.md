@@ -1,6 +1,8 @@
 # mini-bitcoin
 Minimal Bitcoin Implementation (Satoshi White Paper, not Bitcoin Core)
 
+Just small 5 files. (not ready yet)
+
 https://bitcoin.org/bitcoin.pdf
 
 mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
