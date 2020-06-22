@@ -10,4 +10,5 @@ class K {
 	static final String SPEC = "secp256k1";
 	static final String ALGO = "EC";
 	static final long MINE_ROUND = 1000000;
+	static final String GENESIS_MSG = "Marconi Pereira Soldate";
 }

@@ -10,13 +10,13 @@ import java.util.*;
 
 class U {
 
+	static boolean DEBUG_MODE = true; // show messages
 	static final SecureRandom random = new SecureRandom();
 	static MessageDigest sha256;
 	static Signature ecdsa;
 	static SimpleDateFormat simpleDateFormat;
 	static final String SHA_ALGO = "SHA256withECDSA";
 	static BigInteger MAX_BIG = BigInteger.ONE.shiftLeft(255);
-
 	static {
 		try {
 			sha256 = MessageDigest.getInstance("SHA-256");
@@ -26,12 +26,6 @@ class U {
 		} catch (final NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-	}
-
-	static Object deserialize(final byte[] data) throws IOException, ClassNotFoundException {
-		final ByteArrayInputStream in = new ByteArrayInputStream(data);
-		final ObjectInputStream is = new ObjectInputStream(in);
-		return is.readObject();
 	}
 
 	private static KeyPair generateKeyPair() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
@@ -58,18 +52,47 @@ class U {
 		return kf.generatePublic(spec);
 	}
 
+	private static void p(final Object o) {
+		System.out.println(U.simpleDateFormat.format(new Date()) + ": " + o.toString());
+	}
+
 	private static void saveKey(final Key key, final String fileName) throws IOException {
 		writeToFile(fileName, key.getEncoded());
 	}
 
-	private static void writeToFile(final String path, final byte[] key) throws IOException {
-		final File f = new File(path);
-		f.getParentFile().mkdirs();
+	static void cleanFolder(final String dir) {
+		final File index = new File(dir);
+		if (!index.exists()) {
+			index.mkdir();
+		} else {
+			final String[] entries = index.list();
+			for (final String s : entries) {
+				final File currentFile = new File(index.getPath(), s);
+				currentFile.delete();
+			}
+		}
+	}
 
-		final FileOutputStream fos = new FileOutputStream(f);
-		fos.write(key);
-		fos.flush();
-		fos.close();
+	static int countBitsZero(BigInteger n) {
+		int count = 0;
+		while (MAX_BIG.compareTo(n) > 0) {
+			n = n.shiftLeft(1);
+			count++;
+			if (count > 255) {
+				throw new RuntimeException("WTF? countBitsZero shiftLeft " + count);
+			}
+		}
+		return count;
+	}
+
+	static void d(final Object o) {
+		if (DEBUG_MODE && o != null) U.p(o);
+	}
+
+	static Object deserialize(final byte[] data) throws IOException, ClassNotFoundException {
+		final ByteArrayInputStream in = new ByteArrayInputStream(data);
+		final ObjectInputStream is = new ObjectInputStream(in);
+		return is.readObject();
 	}
 
 	static KeyPair generateAndSaveKeyPair()
@@ -80,6 +103,16 @@ class U {
 		saveKey(privateKey, "KeyPair/private.key");
 		saveKey(publicKey, "KeyPair/public.key");
 		return keypair;
+	}
+
+	static long getGoodRandom() {
+		long l = random.nextLong();
+		// Long.MAX_VALUE + 1 is a negative number
+		// So, make sure l+K.MINE_ROUND is greater than zero for "for" loop (mine)
+		while (l > 0 && l + K.MINE_ROUND < 0) {
+			l = random.nextLong();
+		}
+		return l;
 	}
 
 	static KeyPair loadKeyPairFromFile() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
@@ -99,18 +132,18 @@ class U {
 		return out.toByteArray();
 	}
 
-	static void p(final Object o) {
-		System.out.println(U.simpleDateFormat.format(new Date()) + ": " + o.toString());
-	}
-
-	static void w(final Object o) {
-		System.out.println(o.toString());
+	static BigInteger sha(final Object o) throws IOException {
+		return new BigInteger(1, U.sha256.digest(U.serialize(o)));
 	}
 
 	static byte[] sign(final byte[] msg) throws InvalidKeyException, SignatureException {
-		ecdsa.initSign(Main.yourKeypair.getPrivate());
+		ecdsa.initSign(Main.myKeypair.getPrivate());
 		ecdsa.update(msg);
 		return ecdsa.sign();
+	}
+
+	static void sleep() throws InterruptedException {
+		Thread.sleep(3500);
 	}
 
 	static boolean verify(final PublicKey publicKey, final Transaction tx, final BigInteger signature)
@@ -120,51 +153,18 @@ class U {
 		return ecdsa.verify(signature.toByteArray());
 	}
 
-	static int countBitsZero(BigInteger n) {
-		int count = 0;
-		while (MAX_BIG.compareTo(n) > 0) {
-			n = n.shiftLeft(1);
-			count++;
-			if (count > 255) {
-				throw new RuntimeException("WTF? countBitsZero shiftLeft " + count);
-			}
-		}
-		return count;
+	static void w(final Object o) {
+		System.out.println(o.toString());
 	}
 
-	static BigInteger sha(final Object o) throws IOException {
-		return new BigInteger(1, U.sha256.digest(U.serialize(o)));
-	}
-}
+	static void writeToFile(final String path, final byte[] key) throws IOException {
+		final File f = new File(path);
+		f.getParentFile().mkdirs();
 
-//class D = Debug. Easily on/off debug
-class D {
-	static boolean DEBUG_MODE = true; // show messages
-	// debug node communication.
-	// IF you run: "java mbtc.Main seed", you are a seed ("server") ELSE you are a "client" of the seed node.
-	static boolean IS_SEED_NODE = false;
-
-	// This is to TEST TWO NODES on the SAME MACHINE (same address, different ports)
-	// try: terminal 1: "java mbtc.Main SEED"
-	// try: terminal 2: "java mbtc.Main"
-	static void debugSeed() {
-		DEBUG_MODE = true;
-		IS_SEED_NODE = true;
-		K.SEEDS = null; // Do NOT connect to anybody. You are just a Server.
-		K.PORT++; // Wait client connections on a different port
-		d("******* DEBUG SEED NODE *********");
+		final FileOutputStream fos = new FileOutputStream(f);
+		fos.write(key);
+		fos.flush();
+		fos.close();
 	}
 
-	static boolean debugSeed(final String[] args) {
-		if (args.length == 1 && args[0] != null && args[0].toUpperCase().equals("SEED")) return true;
-		else return false;
-	}
-
-	static void sleep() throws InterruptedException {
-		if (D.DEBUG_MODE) Thread.sleep(3500);
-	}
-
-	static void d(final Object o) {
-		if (D.DEBUG_MODE && o != null) U.p(o);
-	}
 }

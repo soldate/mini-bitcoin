@@ -5,7 +5,7 @@ Just small 5 files. (not ready yet)
 
 https://bitcoin.org/bitcoin.pdf
 
-mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
+Mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
 
 The goal of this project is to allow any Java programmer to create their own currency.
 
