@@ -28,14 +28,14 @@ class Net {
 	}
 
 	static void clientConfigAndConnect() throws IOException {
-		U.d("CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
+		U.d(2, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
 		SocketChannel socketChannel = null;
 		if (K.SEEDS != null) {
 			for (final String s : K.SEEDS) {
 				socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
 				socketChannel.configureBlocking(false);
 				p2pChannels.put(socketChannel, new ChannelBuffer(socketChannel));
-				U.d("CLIENT: i am client of SERVER " + s);
+				U.d(1, "CLIENT: i am client of SERVER " + s);
 			}
 		}
 	}
@@ -51,15 +51,15 @@ class Net {
 		if (inUse.buffer.remaining() > 0) {
 			final int qty = socketChannel.read(inUse.buffer);
 			if (qty <= 0) {
-				U.d("nothing to be read");
+				U.d(3, "nothing to be read");
 			} else {
 				try {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
-						U.d("READ: we receive a BLOCK");
+						U.d(2, "READ: we receive a BLOCK");
 						BC.addBlock((Block) txOrBlock, true);
 					} else if (txOrBlock instanceof Transaction) {
-						U.d("READ: we receive a TRANSACTION");
+						U.d(2, "READ: we receive a TRANSACTION");
 						addTransaction((Transaction) txOrBlock);
 					}
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException e) {
@@ -69,7 +69,7 @@ class Net {
 				}
 			}
 		} else {
-			U.d("Are we under DoS attack?");
+			U.d(1, "Are we under DoS attack?");
 			disconnect(socketChannel);
 		}
 
@@ -79,15 +79,15 @@ class Net {
 		try {
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(Net.toSend));
-			U.d("SEND: wrote " + qty + " bytes");
+			U.d(2, "SEND: wrote " + qty + " bytes");
 		} catch (final IOException e) {
-			U.d("Other side DISCONNECT.. closing channel..");
+			U.d(1, "Other side DISCONNECT.. closing channel..");
 			disconnect(channel);
 		}
 	}
 
 	static ServerSocketChannel serverConfig() throws IOException {
-		U.d("SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
+		U.d(2, "SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
 		try {
 			serverSC.bind(new InetSocketAddress(K.PORT));

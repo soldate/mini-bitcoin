@@ -11,12 +11,14 @@ import java.util.*;
 class U {
 
 	static boolean DEBUG_MODE = true; // show messages
+	static int logVerbosityLevel = 1;
 	static final SecureRandom random = new SecureRandom();
 	static MessageDigest sha256;
 	static Signature ecdsa;
 	static SimpleDateFormat simpleDateFormat;
 	static final String SHA_ALGO = "SHA256withECDSA";
 	static BigInteger MAX_BIG = BigInteger.ONE.shiftLeft(255);
+
 	static {
 		try {
 			sha256 = MessageDigest.getInstance("SHA-256");
@@ -85,8 +87,8 @@ class U {
 		return count;
 	}
 
-	static void d(final Object o) {
-		if (DEBUG_MODE && o != null) U.p(o);
+	static void d(final int log, final Object o) {
+		if (DEBUG_MODE && o != null && log <= logVerbosityLevel) U.p(o);
 	}
 
 	static Object deserialize(final byte[] data) throws IOException, ClassNotFoundException {
@@ -143,7 +145,7 @@ class U {
 	}
 
 	static void sleep() throws InterruptedException {
-		Thread.sleep(3500);
+		Thread.sleep(2500);
 	}
 
 	static boolean verify(final PublicKey publicKey, final Transaction tx, final BigInteger signature)
@@ -160,7 +162,7 @@ class U {
 	static void writeToFile(final String path, final byte[] data) throws IOException {
 
 		if (new File(path).exists()) {
-			U.d("File already exists.. not saving");
+			U.d(1, "File already exists.. not saving");
 			return;
 		}
 

@@ -69,10 +69,10 @@ class BC {
 
 		if (targetAdjustment(block, newBlockInfo) > 1) {
 			newBlockInfo.target = chainInfo.target.add(chainInfo.target.shiftRight(2));
-			U.d("DIFF DECREASE 25%. target: " + newBlockInfo.target.toString(16));
+			U.d(2, "DIFF DECREASE 25%. target: " + newBlockInfo.target.toString(16));
 		} else {
 			newBlockInfo.target = chainInfo.target.subtract(chainInfo.target.shiftRight(2));
-			U.d("DIFF INCREASE 25%. target: " + newBlockInfo.target.toString(16));
+			U.d(2, "DIFF INCREASE 25%. target: " + newBlockInfo.target.toString(16));
 		}
 
 		return newBlockInfo;
@@ -95,7 +95,7 @@ class BC {
 		final BigInteger blockHash = U.sha(block);
 		final String fileName = "UTXO/" + blockHash;
 		if (new File(fileName).exists()) {
-			U.d("we already have this block");
+			U.d(2, "we already have this block");
 			return false;
 		}
 		return true;
@@ -182,22 +182,22 @@ class BC {
 						saveBlockchainInfo(newBlockInfo);
 
 						if (newBlockInfo.chainWork.compareTo(BC.bestBlockchainInfo.chainWork) > 0) {
-							U.d("new BC.bestBlockchainInfo");
+							U.d(2, "new bestBlockchainInfo");
 							BC.bestBlockchainInfo = newBlockInfo;
 						} else {
-							U.d("WARN: this new block is NOT from my best blockchain..");
+							U.d(1, "WARN: this new block is NOT from my best blockchain..");
 						}
 					} else {
-						U.d("WARN: INVALID BLOCK. Inputs + Reward != Outputs");
+						U.d(1, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
 					}
 				} else {
-					U.d("WARN: INVALID BLOCK. No transactions.");
+					U.d(1, "WARN: INVALID BLOCK. No transactions.");
 				}
 			} else {
-				U.d("WARN: INVALID BLOCK. Invalid PoW.");
+				U.d(1, "WARN: INVALID BLOCK. Invalid PoW.");
 			}
 		} else {
-			U.d("WARN: Unknown 'last block' of this Block.");
+			U.d(1, "WARN: Unknown 'last block' of this Block.");
 		}
 	}
 

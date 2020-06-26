@@ -16,6 +16,8 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
+			U.logVerbosityLevel = 1; // 3 = very verbose
+
 			loadOrCreateKeyPair();
 
 			// read all blocks and create UTXO
@@ -64,10 +66,10 @@ public class Main {
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException, IOException {
 
 		if (new File("KeyPair/private.key").exists()) {
-			U.d("Loading keys");
+			U.d(2, "Loading keys");
 			myKeypair = U.loadKeyPairFromFile();
 		} else {
-			U.d("Generating keys");
+			U.d(2, "Generating keys");
 			myKeypair = U.generateAndSaveKeyPair();
 		}
 
@@ -76,7 +78,7 @@ public class Main {
 	private static void mineALittleBit()
 			throws IOException, InvalidKeyException, SignatureException, InterruptedException, ClassNotFoundException {
 		if (BC.startMining) {
-			U.d("mining...");
+			U.d(3, "mining...");
 			boolean iFoundIt = false;
 			final long l = U.getGoodRandom();
 			final Block candidate = BC.createBlockCandidate();
@@ -87,8 +89,9 @@ public class Main {
 				candidate.nonce = i;
 				final BigInteger candidateHash = U.sha(candidate);
 				if (target.compareTo(candidateHash) > 0) {
-					U.d("target:" + target.toString(16));
-					U.d("candidateHash:" + candidateHash.toString(16));
+					U.d(1, "We mine a NEW BLOCK!");
+					U.d(2, "target:" + target.toString(16));
+					U.d(2, "candidateHash:" + candidateHash.toString(16));
 					iFoundIt = true;
 					break;
 				}
@@ -110,19 +113,19 @@ public class Main {
 		final SocketChannel newChannel = serverSC.accept();
 
 		if (newChannel == null) {
-			U.d("...no new connection...handle the open channels..");
+			U.d(3, "...no new connection...handle the open channels..");
 			for (final SocketChannel s : Net.p2pChannels.keySet()) {
 				if (s.isOpen() && !s.isBlocking()) {
 					if (Net.toSend != null) Net.sendData(s);
 					Net.readData(s);
 				} else {
-					U.d("channel is closed or blocking.. DISCONNECTING..");
+					U.d(1, "channel is closed or blocking.. DISCONNECTING..");
 					Net.disconnect(s);
 				}
 			}
 			Net.toSend = null;
 		} else {
-			U.d("SERVER: *** We have a NEW CLIENT!!! ***");
+			U.d(1, "SERVER: *** We have a NEW CLIENT!!! ***");
 			newChannel.configureBlocking(false);
 			Net.p2pChannels.put(newChannel, new ChannelBuffer(newChannel));
 		}
@@ -156,7 +159,7 @@ public class Main {
 		final long secondsFromLastAction = (now - Net.lastAction) / 1000;
 
 		if (secondsFromLastAction > 10) {
-			U.d("Should i do something? More than 10s passed doing nothing (just mining)...");
+			U.d(3, "Should i do something? More than 10s passed doing nothing (just mining)...");
 			// do something...
 			Net.lastAction = now;
 		}
@@ -171,8 +174,8 @@ public class Main {
 		U.w("Se tudo ok, você já estará minerando!");
 		U.w("Aqui está sua lista de comandos:");
 		U.w("--------------- MENU ----------------");
-		U.w("/status - Mostra a situação do seu node na rede.");
-		U.w("/saldo - Mostra seu saldo e mais");
+		U.w("/status - Mostra a situação do seu node.");
+		U.w("/saldo - Mostra seu saldo e mais.");
 		U.w("/enviar 1 rtwkgnfgsdgdsjgl - Envia 1 mbtc para rtwkgnfgsdgdsjgl");
 		U.w("/mine - Para ou reinicia a mineração. Veja /status.");
 		U.w("/log - Liga o log. CUIDADO! DIGITE / e clique ENTER para parar o log.");
@@ -188,7 +191,7 @@ public class Main {
 
 		switch (args[0]) {
 		case "/status":
-			U.d("saldo: " + balance);
+			U.d(1, "saldo: " + balance);
 			break;
 		}
 
