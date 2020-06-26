@@ -28,13 +28,14 @@ class Net {
 	}
 
 	static void clientConfigAndConnect() throws IOException {
-		U.d("p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
+		U.d("CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
 		SocketChannel socketChannel = null;
 		if (K.SEEDS != null) {
 			for (final String s : K.SEEDS) {
 				socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
 				socketChannel.configureBlocking(false);
 				p2pChannels.put(socketChannel, new ChannelBuffer(socketChannel));
+				U.d("CLIENT: i am client of SERVER " + s);
 			}
 		}
 	}
@@ -55,10 +56,10 @@ class Net {
 				try {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
-						U.d("we receive a BLOCK");
+						U.d("READ: we receive a BLOCK");
 						BC.addBlock((Block) txOrBlock, true);
 					} else if (txOrBlock instanceof Transaction) {
-						U.d("we receive a TRANSACTION");
+						U.d("READ: we receive a TRANSACTION");
 						addTransaction((Transaction) txOrBlock);
 					}
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException e) {
@@ -78,7 +79,7 @@ class Net {
 		try {
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(Net.toSend));
-			U.d("wrote " + qty + " bytes");
+			U.d("SEND: wrote " + qty + " bytes");
 		} catch (final IOException e) {
 			U.d("Other side DISCONNECT.. closing channel..");
 			disconnect(channel);
@@ -86,7 +87,7 @@ class Net {
 	}
 
 	static ServerSocketChannel serverConfig() throws IOException {
-		U.d("p2p = you are client AND server. SERVER async CONFIG is here.");
+		U.d("SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
 		try {
 			serverSC.bind(new InetSocketAddress(K.PORT));

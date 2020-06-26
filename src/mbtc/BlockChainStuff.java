@@ -8,7 +8,7 @@ import java.util.*;
 
 // BC = Blockchains
 class BC {
-	static boolean startMining = false; // should i start mining or still has blocks to download?
+	static boolean startMining = true; // should i start mining or still has blocks to download?
 
 	// top block of my best blockchain (bigger chainWork. i will mine from this block)
 	static BlockchainInfo bestBlockchainInfo;
@@ -21,7 +21,7 @@ class BC {
 		bestBlockchainInfo.height = 0;
 		bestBlockchainInfo.chainWork = BigInteger.TWO.pow(U.countBitsZero(genesisHash));
 		bestBlockchainInfo.blockHash = genesisHash;
-		bestBlockchainInfo.target = new BigInteger("0000080000000000000000000000000000000000000000000000000000000000",
+		bestBlockchainInfo.target = new BigInteger("0000800000000000000000000000000000000000000000000000000000000000",
 				16);
 		U.cleanFolder("UTXO/");
 		saveBlockchainInfo(bestBlockchainInfo);
@@ -67,14 +67,14 @@ class BC {
 		newBlockInfo.chainWork = chainInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
 		newBlockInfo.UTXO = utxoUpdate(chainInfo.UTXO, block);
 
-		U.d("addBlock - LAST target:" + chainInfo.target.toString(16));
 		if (targetAdjustment(block, newBlockInfo) > 1) {
-			newBlockInfo.target = chainInfo.target.shiftLeft(1);
+			newBlockInfo.target = chainInfo.target.add(chainInfo.target.shiftRight(2));
+			U.d("DIFF DECREASE 25%. target: " + newBlockInfo.target.toString(16));
 		} else {
-			newBlockInfo.target = chainInfo.target.shiftRight(1);
+			newBlockInfo.target = chainInfo.target.subtract(chainInfo.target.shiftRight(2));
+			U.d("DIFF INCREASE 25%. target: " + newBlockInfo.target.toString(16));
 		}
-		U.d("addBlock - NEW  target:" + newBlockInfo.target.toString(16));
-		BC.saveBlockchainInfo(newBlockInfo);
+
 		return newBlockInfo;
 	}
 
@@ -134,7 +134,11 @@ class BC {
 	// clone last UTXO, clean outputs (block inputs) and add new outputs (block outputs)
 	private static Map<BigInteger, Transaction> utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block)
 			throws IOException {
-		final Map<BigInteger, Transaction> NEW_UTXO = new HashMap<BigInteger, Transaction>(UTXO);
+		final Map<BigInteger, Transaction> NEW_UTXO;
+
+		// if utxo exists then clone.
+		if (UTXO != null) NEW_UTXO = new HashMap<BigInteger, Transaction>(UTXO);
+		else NEW_UTXO = new HashMap<BigInteger, Transaction>();
 
 		for (final Transaction tx : block.txs) {
 			if (tx.inputs != null) {
@@ -155,7 +159,7 @@ class BC {
 	}
 
 	static void addBlock(final Block block, final boolean persist)
-			throws InvalidKeyException, SignatureException, IOException {
+			throws InvalidKeyException, SignatureException, IOException, ClassNotFoundException {
 		if (!shouldStartValidation(block)) return;
 		final BlockchainInfo chainInfo = BC.getBlockchainInfo(block.lastBlockHash);
 
@@ -172,35 +176,28 @@ class BC {
 					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
 
-						if (persist) saveBlock(newBlockInfo, block);
-						BC.saveBlockchainInfo(newBlockInfo);
+						if (persist) {
+							saveBlock(newBlockInfo, block);
+						}
+						saveBlockchainInfo(newBlockInfo);
 
 						if (newBlockInfo.chainWork.compareTo(BC.bestBlockchainInfo.chainWork) > 0) {
 							U.d("new BC.bestBlockchainInfo");
 							BC.bestBlockchainInfo = newBlockInfo;
+						} else {
+							U.d("WARN: this new block is NOT from my best blockchain..");
 						}
-
-						// TODO enviar pra blockchainstuff construir utxo map com key publickey.
-
-//						for (final Transaction tx : block.txs) {
-//							if (tx.inputs != null) {
-//								for (final Input in : tx.inputs) {
-//									final Transaction lastTx = chainInfo.UTXO.get(in.txHash);
-//									if (lastTx == null) continue;
-//									final Output out = lastTx.outputs.get(in.outputIndex);
-//									if (out == null) continue;
-//								}
-//							}
-//
-//							for (final Output o : tx.outputs) {
-//								if (o.publicKey.equals(myKeypair.getPublic())) {
-//
-//								}
-//							}
-//						}
+					} else {
+						U.d("WARN: INVALID BLOCK. Inputs + Reward != Outputs");
 					}
+				} else {
+					U.d("WARN: INVALID BLOCK. No transactions.");
 				}
+			} else {
+				U.d("WARN: INVALID BLOCK. Invalid PoW.");
 			}
+		} else {
+			U.d("WARN: Unknown 'last block' of this Block.");
 		}
 	}
 
@@ -214,15 +211,12 @@ class BC {
 		return candidate;
 	}
 
-	static BlockchainInfo getBlockchainInfo(final BigInteger lastBlockHash) {
+	static BlockchainInfo getBlockchainInfo(final BigInteger lastBlockHash) throws IOException, ClassNotFoundException {
 		BlockchainInfo b = null;
-		try {
-			final String fileName = "UTXO/" + lastBlockHash;
-			if (new File(fileName).exists()) {
-				final byte[] data = Files.readAllBytes(new File(fileName).toPath());
-				b = (BlockchainInfo) U.deserialize(data);
-			}
-		} catch (final IOException | ClassNotFoundException e) {
+		final String fileName = "UTXO/" + lastBlockHash;
+		if (new File(fileName).exists()) {
+			final byte[] data = Files.readAllBytes(new File(fileName).toPath());
+			b = (BlockchainInfo) U.deserialize(data);
 		}
 
 		return b;
@@ -230,9 +224,42 @@ class BC {
 
 	static void saveBlockchainInfo(final BlockchainInfo b) {
 		try {
-			U.writeToFile("UTXO/" + b.blockHash, U.serialize(bestBlockchainInfo));
+			U.writeToFile("UTXO/" + b.blockHash, U.serialize(b));
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	static List<Input> getMoney(final PublicKey publicKey) {
+		List<Input> inputs = null;
+		Transaction tx = null;
+		BigInteger txHash = null;
+
+		if (bestBlockchainInfo.UTXO == null) return null;
+
+		for (final Map.Entry<BigInteger, Transaction> entry : bestBlockchainInfo.UTXO.entrySet()) {
+			txHash = entry.getKey();
+			tx = entry.getValue();
+			for (int i = 0; i < tx.outputs.size(); i++) {
+				if (tx.outputs.get(i).publicKey.equals(publicKey)) {
+					if (inputs == null) inputs = new ArrayList<Input>();
+					final Input input = new Input();
+					input.txHash = txHash;
+					input.outputIndex = i;
+					inputs.add(input);
+				}
+			}
+		}
+		return inputs;
+	}
+
+	static long getBalance(final List<Input> myMoney) {
+		long balance = 0;
+		for (final Input i : myMoney) {
+			final Transaction tx = bestBlockchainInfo.UTXO.get(i.txHash);
+			final Output o = tx.outputs.get(i.outputIndex);
+			balance += o.value;
+		}
+		return balance;
 	}
 }

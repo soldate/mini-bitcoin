@@ -157,12 +157,18 @@ class U {
 		System.out.println(o.toString());
 	}
 
-	static void writeToFile(final String path, final byte[] key) throws IOException {
+	static void writeToFile(final String path, final byte[] data) throws IOException {
+
+		if (new File(path).exists()) {
+			U.d("File already exists.. not saving");
+			return;
+		}
+
 		final File f = new File(path);
 		f.getParentFile().mkdirs();
 
 		final FileOutputStream fos = new FileOutputStream(f);
-		fos.write(key);
+		fos.write(data);
 		fos.flush();
 		fos.close();
 	}

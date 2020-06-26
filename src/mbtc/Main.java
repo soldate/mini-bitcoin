@@ -6,6 +6,7 @@ import java.nio.channels.*;
 import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
+import java.util.*;
 
 public class Main {
 
@@ -73,8 +74,9 @@ public class Main {
 	}
 
 	private static void mineALittleBit()
-			throws IOException, InvalidKeyException, SignatureException, InterruptedException {
+			throws IOException, InvalidKeyException, SignatureException, InterruptedException, ClassNotFoundException {
 		if (BC.startMining) {
+			U.d("mining...");
 			boolean iFoundIt = false;
 			final long l = U.getGoodRandom();
 			final Block candidate = BC.createBlockCandidate();
@@ -120,7 +122,7 @@ public class Main {
 			}
 			Net.toSend = null;
 		} else {
-			U.d("*** We have a NEW CLIENT!!! ***");
+			U.d("SERVER: *** We have a NEW CLIENT!!! ***");
 			newChannel.configureBlocking(false);
 			Net.p2pChannels.put(newChannel, new ChannelBuffer(newChannel));
 		}
@@ -129,7 +131,7 @@ public class Main {
 
 	// Async! Read terminal, send/receive networks messages, mine a little bit and do it all again and again.
 	private static void run(final ServerSocketChannel serverSC)
-			throws InterruptedException, IOException, InvalidKeyException, SignatureException {
+			throws InterruptedException, IOException, InvalidKeyException, SignatureException, ClassNotFoundException {
 
 		final BufferedReader ttyReader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -180,9 +182,13 @@ public class Main {
 
 	private static void userCommandHandler(final String readLine) {
 		final String args[] = readLine.split(" ");
+
+		final List<Input> myMoney = BC.getMoney(myKeypair.getPublic());
+		final long balance = myMoney != null ? BC.getBalance(myMoney) : 0;
+
 		switch (args[0]) {
-		case "/send":
-			U.d("/sendeeeeeee");
+		case "/status":
+			U.d("saldo: " + balance);
 			break;
 		}
 
