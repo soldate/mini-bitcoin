@@ -16,7 +16,9 @@ class ChannelBuffer {
 	}
 }
 
-class Net {
+// N = Net = p2p = client and server stuff
+class N {
+	static ServerSocketChannel serverSC;
 	static long lastAction = System.currentTimeMillis();
 	static ByteBuffer p2pReadBuffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	static byte[] toSend;
@@ -27,7 +29,7 @@ class Net {
 
 	}
 
-	static void clientConfigAndConnect() throws IOException {
+	private static void clientConfigAndConnect() throws IOException {
 		U.d(2, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
 		SocketChannel socketChannel = null;
 		if (K.SEEDS != null) {
@@ -40,13 +42,13 @@ class Net {
 		}
 	}
 
-	static void disconnect(final SocketChannel channel) throws IOException {
-		Net.p2pChannels.remove(channel);
+	private static void disconnect(final SocketChannel channel) throws IOException {
+		p2pChannels.remove(channel);
 		channel.close();
 	}
 
-	static void readData(final SocketChannel socketChannel) throws IOException {
-		final ChannelBuffer inUse = Net.p2pChannels.get(socketChannel);
+	private static void readData(final SocketChannel socketChannel) throws IOException {
+		final ChannelBuffer inUse = p2pChannels.get(socketChannel);
 
 		if (inUse.buffer.remaining() > 0) {
 			final int qty = socketChannel.read(inUse.buffer);
@@ -57,7 +59,7 @@ class Net {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
 						U.d(2, "READ: we receive a BLOCK");
-						BC.addBlock((Block) txOrBlock, true);
+						B.addBlock((Block) txOrBlock, true);
 					} else if (txOrBlock instanceof Transaction) {
 						U.d(2, "READ: we receive a TRANSACTION");
 						addTransaction((Transaction) txOrBlock);
@@ -75,10 +77,10 @@ class Net {
 
 	}
 
-	static void sendData(final SocketChannel channel) throws IOException, InterruptedException {
+	private static void sendData(final SocketChannel channel) throws IOException, InterruptedException {
 		try {
 			int qty = 0;
-			qty = channel.write(ByteBuffer.wrap(Net.toSend));
+			qty = channel.write(ByteBuffer.wrap(toSend));
 			U.d(2, "SEND: wrote " + qty + " bytes");
 		} catch (final IOException e) {
 			U.d(1, "Other side DISCONNECT.. closing channel..");
@@ -86,7 +88,7 @@ class Net {
 		}
 	}
 
-	static ServerSocketChannel serverConfig() throws IOException {
+	private static ServerSocketChannel serverConfig() throws IOException {
 		U.d(2, "SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
 		try {
@@ -96,5 +98,35 @@ class Net {
 		}
 		serverSC.configureBlocking(false);
 		return serverSC;
+	}
+
+	static void configAsyncP2P() throws IOException {
+		serverSC = serverConfig();
+		clientConfigAndConnect();
+	}
+
+	// should i connect, read or send any network messages?
+	static void p2pHandler() throws IOException, InterruptedException {
+
+		final SocketChannel newChannel = serverSC.accept();
+
+		if (newChannel == null) {
+			U.d(3, "...no new connectio..handle the open channels..");
+			for (final SocketChannel s : p2pChannels.keySet()) {
+				if (s.isOpen() && !s.isBlocking()) {
+					if (toSend != null) sendData(s);
+					readData(s);
+				} else {
+					U.d(1, "channel is closed or blocking.. DISCONNECTING..");
+					disconnect(s);
+				}
+			}
+			toSend = null;
+		} else {
+			U.d(1, "SERVER: *** We have a NEW CLIENT!!! ***");
+			newChannel.configureBlocking(false);
+			p2pChannels.put(newChannel, new ChannelBuffer(newChannel));
+		}
+
 	}
 }
