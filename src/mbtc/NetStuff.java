@@ -24,11 +24,6 @@ class N {
 	static byte[] toSend;
 	static Map<SocketChannel, ChannelBuffer> p2pChannels = new HashMap<SocketChannel, ChannelBuffer>();
 
-	private static void addTransaction(final Transaction txOrBlock) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private static void clientConfigAndConnect() throws IOException {
 		U.d(2, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
 		SocketChannel socketChannel = null;
@@ -49,6 +44,7 @@ class N {
 
 	private static void readData(final SocketChannel socketChannel) throws IOException {
 		final ChannelBuffer inUse = p2pChannels.get(socketChannel);
+		boolean disconnect = false;
 
 		if (inUse.buffer.remaining() > 0) {
 			final int qty = socketChannel.read(inUse.buffer);
@@ -59,19 +55,29 @@ class N {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
 						U.d(2, "READ: we receive a BLOCK");
-						B.addBlock((Block) txOrBlock, true);
+						U.d(2, txOrBlock);
+						B.addBlock((Block) txOrBlock);
 					} else if (txOrBlock instanceof Transaction) {
 						U.d(2, "READ: we receive a TRANSACTION");
-						addTransaction((Transaction) txOrBlock);
+						U.d(2, txOrBlock);
+						B.addTx2MemPool((Transaction) txOrBlock);
+					} else {
+						disconnect = true;
 					}
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException e) {
 					e.printStackTrace();
+					U.exceptions_count++;
+					disconnect = true;
 				} finally {
 					inUse.buffer.clear();
 				}
 			}
 		} else {
 			U.d(1, "Are we under DoS attack?");
+			disconnect(socketChannel);
+		}
+
+		if (disconnect) {
 			disconnect(socketChannel);
 		}
 

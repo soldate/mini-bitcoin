@@ -14,6 +14,7 @@ class U {
 	static final SecureRandom random = new SecureRandom();
 	static SimpleDateFormat simpleDateFormat;
 	static BigInteger MAX_BIG = BigInteger.ONE.shiftLeft(255);
+	static int exceptions_count = 0;
 
 	static {
 		simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -50,6 +51,10 @@ class U {
 
 	static void d(final int log, final Object o) {
 		if (DEBUG_MODE && o != null && log <= logVerbosityLevel) U.p(o);
+	}
+
+	static Object deepCopy(final Object o) throws ClassNotFoundException, IOException {
+		return deserialize(serialize(o));
 	}
 
 	static Object deserialize(final byte[] data) throws IOException, ClassNotFoundException {

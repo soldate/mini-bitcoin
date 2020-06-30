@@ -7,6 +7,7 @@ class K {
 	static final long BLOCK_TIME = 600000; // 10 minutes
 	static final long REWARD = 50;
 	static final int MAX_BLOCK_SIZE = 1024 * 1024;
+	static final int MIN_BLOCK_SIZE = 1024; // Block with only coinbase tx. Im NOT sure about 1k. :-D
 	static final String SPEC = "secp256k1";
 	static final String ALGO = "EC";
 	static final long MINE_ROUND = 5 * 10000;

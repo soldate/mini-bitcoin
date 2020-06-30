@@ -6,9 +6,10 @@ import java.security.*;
 import java.security.spec.*;
 import java.util.*;
 
+// U = Util; C = CryptoStuff; B = BlockchainStuff; N = NetStuff;
 public class Main {
 
-	// my public and private key
+	// my user = my public and private key
 	static KeyPair me;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
@@ -59,7 +60,6 @@ public class Main {
 
 			if (iFoundIt) {
 				N.toSend = U.serialize(candidate);
-				B.addBlock(candidate, true);
 			}
 		} else {
 			// take a breath
@@ -127,6 +127,12 @@ public class Main {
 			final long balance = myPotencialInputs != null ? B.getBalance(myPotencialInputs) : 0;
 
 			switch (args[0]) {
+
+			case "/quit":
+				U.d(0, "------ Thanks! See you! ------");
+				System.exit(0);
+				break;
+
 			case "/status":
 				U.d(0, "------ /status ------");
 				U.d(0, "balance: " + balance);
@@ -158,15 +164,18 @@ public class Main {
 						outputs.add(outChange);
 					}
 					tx.outputs = outputs;
+					U.d(1, "Your tx: " + tx);
+					N.toSend = U.serialize(tx);
 				}
 				break;
 
 			}
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
 			U.d(1, "****** COMMAND ERROR ******");
+			U.exceptions_count++;
+			U.d(1, "Exceptions count: " + U.exceptions_count);
 			U.d(1, e.getMessage());
 			U.d(1, "***************************");
 		}
 	}
-
 }

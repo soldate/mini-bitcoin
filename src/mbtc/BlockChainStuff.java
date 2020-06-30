@@ -10,7 +10,7 @@ import java.util.*;
 class B {
 	static boolean startMining = true; // should i start mining or still has blocks to download?
 
-	// top block of my best blockchain (bigger chainWork. i will mine from this block)
+	// top block of my best blockchain (bigger chainWork = i will mine from this block)
 	static BlockchainInfo bestBlockchainInfo;
 
 	static List<Transaction> mempool = new ArrayList<Transaction>();
@@ -23,6 +23,7 @@ class B {
 		bestBlockchainInfo.blockHash = genesisHash;
 		bestBlockchainInfo.target = new BigInteger("0000800000000000000000000000000000000000000000000000000000000000",
 				16);
+		bestBlockchainInfo.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder("UTXO/");
 		saveBlockchainInfo(bestBlockchainInfo);
 	}
@@ -64,12 +65,22 @@ class B {
 		return b;
 	}
 
-	private static List<Transaction> getFromMemPool() {
-		return new ArrayList<Transaction>();
-	}
-
-	private static Output getOutput(final Input input) {
-		return getOutput(input, bestBlockchainInfo);
+	private static List<Transaction> getFromMemPool() throws IOException {
+		final List<Transaction> txs = new ArrayList<Transaction>();
+		int txBytesSize = 0;
+		int totalSize = 0;
+		for (int i = 0; i < mempool.size(); i++) {
+			if (isValidTx(mempool.get(i))) {
+				txBytesSize = U.serialize(mempool.get(i)).length;
+				if ((txBytesSize + totalSize) > (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					txs.add(mempool.get(i));
+					totalSize += txBytesSize;
+				} else {
+					break;
+				}
+			}
+		}
+		return txs;
 	}
 
 	private static Output getOutput(final Input input, final BlockchainInfo chain) {
@@ -77,21 +88,31 @@ class B {
 		return tx.outputs.get(input.outputIndex);
 	}
 
+	private static boolean isValidTx(final Transaction tx) {
+		for (final Input in : tx.inputs) {
+			final Transaction lastTx = bestBlockchainInfo.UTXO.get(in.txHash);
+			if (lastTx == null) return false;
+			final Output out = lastTx.outputs.get(in.outputIndex);
+			if (out == null) return false;
+		}
+		return true;
+	}
+
 	private static BlockchainInfo newBlockchainInfo(final Block block, final BlockchainInfo chainInfo)
-			throws IOException {
+			throws IOException, ClassNotFoundException {
 		final BigInteger blockHash = C.sha(block);
-		final BlockchainInfo newBlockInfo = new BlockchainInfo();
-		newBlockInfo.height = chainInfo.height + 1;
+		final BlockchainInfo newBlockInfo = (BlockchainInfo) U.deepCopy(chainInfo);
+		newBlockInfo.height++;
 		newBlockInfo.blockHash = blockHash;
-		newBlockInfo.chainWork = chainInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
-		newBlockInfo.UTXO = utxoUpdate(chainInfo.UTXO, block);
+		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
+		utxoUpdate(newBlockInfo.UTXO, block);
 
 		if (targetAdjustment(block, newBlockInfo) > 1) {
-			newBlockInfo.target = chainInfo.target.add(chainInfo.target.shiftRight(2));
-			U.d(2, "DIFF DECREASE 25%. target: " + newBlockInfo.target.toString(16));
+			newBlockInfo.target = newBlockInfo.target.add(newBlockInfo.target.shiftRight(4));
+			U.d(2, "DIFF DECREASE 6,25%. target: " + newBlockInfo.target.toString(16));
 		} else {
-			newBlockInfo.target = chainInfo.target.subtract(chainInfo.target.shiftRight(2));
-			U.d(2, "DIFF INCREASE 25%. target: " + newBlockInfo.target.toString(16));
+			newBlockInfo.target = newBlockInfo.target.subtract(newBlockInfo.target.shiftRight(4));
+			U.d(2, "DIFF INCREASE 6,25%. target: " + newBlockInfo.target.toString(16));
 		}
 
 		return newBlockInfo;
@@ -156,36 +177,30 @@ class B {
 		return ((newBlockInfo.height * K.BLOCK_TIME) + K.START_TIME) / block.time;
 	}
 
-	// clone last UTXO, clean outputs (block inputs) and add new outputs (block outputs)
-	private static Map<BigInteger, Transaction> utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block)
-			throws IOException {
-		final Map<BigInteger, Transaction> NEW_UTXO;
-
-		// if utxo exists then clone.
-		if (UTXO != null) NEW_UTXO = new HashMap<BigInteger, Transaction>(UTXO);
-		else NEW_UTXO = new HashMap<BigInteger, Transaction>();
-
+	// clean outputs (block inputs) and add new outputs (block outputs)
+	private static void utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block) throws IOException {
 		for (final Transaction tx : block.txs) {
 			if (tx.inputs != null) {
 				for (final Input in : tx.inputs) {
-					final Transaction lastTx = NEW_UTXO.get(in.txHash);
-					final Transaction copyTx = new Transaction();
-					copyTx.signature = lastTx.signature;
-					copyTx.outputs = new ArrayList<Output>(lastTx.outputs);
-					copyTx.outputs.set(in.outputIndex, null); // this output was spend
-					NEW_UTXO.put(in.txHash, copyTx);
+					final Transaction lastTx = UTXO.get(in.txHash);
+					if (lastTx == null) continue;
+					lastTx.outputs.set(in.outputIndex, null); // this output was spend
 				}
 			}
 			final BigInteger txHash = C.sha(tx);
 			tx.inputs = null; // throw inputs away
-			NEW_UTXO.put(txHash, tx);
+			UTXO.put(txHash, tx);
 		}
-		return NEW_UTXO;
 	}
 
-	static void addBlock(final Block block, final boolean persist)
+	static boolean addBlock(final Block block)
+			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+		return addBlock(block, true, true);
+	}
+
+	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistBlockInfo)
 			throws InvalidKeyException, SignatureException, IOException, ClassNotFoundException {
-		if (!shouldStartValidation(block)) return;
+		if (!shouldStartValidation(block)) return false;
 		final BlockchainInfo chainInfo = getBlockchainInfo(block.lastBlockHash);
 
 		if (chainInfo != null) {
@@ -194,39 +209,56 @@ class B {
 			if (chainInfo.target.compareTo(blockHash) > 0) {
 				if (block.txs != null) {
 					for (final Transaction tx : block.txs) {
-						if (!checkInputsTxSignature(chainInfo, tx)) return;
+						if (!checkInputsTxSignature(chainInfo, tx)) return false;
 					}
 					final long sumOfInputs = sumOfInputs(chainInfo, block.txs);
 					final long sumOfOutputs = sumOfOutputs(chainInfo, block.txs);
 					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
 
-						if (persist) {
+						if (persistBlock) {
 							saveBlock(newBlockInfo, block);
 						}
-						saveBlockchainInfo(newBlockInfo);
+						if (persistBlockInfo) {
+							saveBlockchainInfo(newBlockInfo);
+						}
 
-						if (newBlockInfo.chainWork.compareTo(bestBlockchainInfo.chainWork) > 0) {
+						if (persistBlockInfo && newBlockInfo.chainWork.compareTo(bestBlockchainInfo.chainWork) > 0) {
 							U.d(2, "new bestBlockchainInfo");
 							bestBlockchainInfo = newBlockInfo;
 						} else {
-							U.d(1, "WARN: this new block is NOT from my best blockchain..");
+							if (persistBlockInfo) U.d(1, "WARN: this new block is NOT to my best blockchain..");
 						}
 					} else {
 						U.d(1, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
+						return false;
 					}
 				} else {
 					U.d(1, "WARN: INVALID BLOCK. No transactions.");
+					return false;
 				}
 			} else {
 				U.d(1, "WARN: INVALID BLOCK. Invalid PoW.");
+				return false;
 			}
 		} else {
 			U.d(1, "WARN: Unknown 'last block' of this Block.");
+			return false;
 		}
+		return true;
 	}
 
-	static Block createBlockCandidate() {
+	static boolean addBlockInfo(final Block block)
+			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+		return addBlock(block, false, true);
+	}
+
+	static void addTx2MemPool(final Transaction tx) {
+		if (mempool.contains(tx)) return;
+		if (isValidTx(tx)) mempool.add(tx);
+	}
+
+	static Block createBlockCandidate() throws IOException {
 		final Block candidate = new Block();
 		candidate.time = System.currentTimeMillis();
 		candidate.lastBlockHash = bestBlockchainInfo.blockHash;
@@ -268,6 +300,16 @@ class B {
 		return inputs;
 	}
 
+	static Output getOutput(final Input input) {
+		return getOutput(input, bestBlockchainInfo);
+	}
+
+	// not used..
+	static boolean isValidBlock(final Block block)
+			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+		return addBlock(block, false, false);
+	}
+
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
 			InvalidKeyException, SignatureException {
 		String fileName = null;
@@ -278,7 +320,7 @@ class B {
 					final byte[] array = Files.readAllBytes(Paths.get(fileName));
 					final Object o = U.deserialize(array);
 					final Block block = (Block) o;
-					addBlock(block, false);
+					addBlockInfo(block);
 				} else {
 					if (j == 1) break x;
 					else break;

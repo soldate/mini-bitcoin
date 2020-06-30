@@ -19,7 +19,7 @@ class C {
 			sha256 = MessageDigest.getInstance("SHA-256");
 			ecdsa = Signature.getInstance(SHA_ALGO);
 		} catch (final NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
 		}
 	}
 
