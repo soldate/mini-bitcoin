@@ -66,6 +66,12 @@ class C {
 		U.writeToFile(fileName, key.getEncoded());
 	}
 
+	private static byte[] sign(final byte[] msg) throws InvalidKeyException, SignatureException {
+		ecdsa.initSign(Main.me.getPrivate());
+		ecdsa.update(msg);
+		return ecdsa.sign();
+	}
+
 	static KeyPair generateAndSaveKeyPair()
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException {
 		KeyPair keypair = null;
@@ -74,6 +80,8 @@ class C {
 		do {
 			keypair = generateKeyPair();
 			publicKey = keypair.getPublic();
+			U.d(0, "pubsize: " + publicKey.getEncoded().length);
+			U.d(0, "prvsize: " + keypair.getPrivate().getEncoded().length);
 			publicKeyString = Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded());
 		} while (publicKeyString.contains("/") || publicKeyString.contains("+"));
 		saveKey(keypair.getPrivate(), "KeyPair/private.key");
@@ -104,10 +112,8 @@ class C {
 		return new BigInteger(1, sha256.digest(U.serialize(o)));
 	}
 
-	static byte[] sign(final byte[] msg) throws InvalidKeyException, SignatureException {
-		ecdsa.initSign(Main.me.getPrivate());
-		ecdsa.update(msg);
-		return ecdsa.sign();
+	static BigInteger sign(final Transaction tx) throws InvalidKeyException, SignatureException, IOException {
+		return new BigInteger(C.sign(U.serialize(tx)));
 	}
 
 	static void sleep() throws InterruptedException {

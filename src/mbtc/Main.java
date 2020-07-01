@@ -15,7 +15,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			U.logVerbosityLevel = 1; // 3 = very verbose
+			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			C.loadOrCreateKeyPair();
 
@@ -30,8 +30,9 @@ public class Main {
 			// run forever ("while(true)" inside)
 			run();
 
-		} catch (IOException | InterruptedException | NoSuchAlgorithmException | InvalidAlgorithmParameterException
-				| InvalidKeySpecException | ClassNotFoundException | InvalidKeyException | SignatureException e) {
+		} catch (IOException | InterruptedException | NoSuchAlgorithmException | InvalidKeySpecException
+				| ClassNotFoundException | InvalidKeyException | SignatureException
+				| InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
 	}
@@ -111,7 +112,6 @@ public class Main {
 		U.w("--------------- MENU ----------------");
 		U.w("/menu - Show this.");
 		U.w("/status - Show your node status.");
-		U.w("/balance - Show your balance and more.");
 		U.w("/send qty address - Send some mbtc to somebody.");
 		U.w("/mine - On/Off your miner.");
 		U.w("/log number - On/Off log (number = 1, 2 or 3).");
@@ -123,14 +123,22 @@ public class Main {
 		try {
 			final String args[] = readLine.split(" ");
 
-			final List<Input> myPotencialInputs = B.getMoney(me.getPublic());
-			final long balance = myPotencialInputs != null ? B.getBalance(myPotencialInputs) : 0;
+			final List<Input> allMyMoney = B.getMoney(me.getPublic());
+			final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
 
 			switch (args[0]) {
 
 			case "/quit":
 				U.d(0, "------ Thanks! See you! ------");
 				System.exit(0);
+				break;
+
+			case "/log":
+				U.logVerbosityLevel = Integer.parseInt(args[1]);
+				break;
+
+			case "/menu":
+				showMenuOptions();
 				break;
 
 			case "/status":
@@ -142,35 +150,26 @@ public class Main {
 
 			case "/send":
 				final Long qty = Long.parseLong(args[1]);
-				final String toAddress = args[2];
-				final PublicKey toPublicKey = C.getPublicKeyFromString(toAddress);
+				final PublicKey toPublicKey = C.getPublicKeyFromString(args[2]);
 
 				if (balance >= qty) {
-					final Transaction tx = new Transaction();
-					// put all your money in this tx (outputs->inputs)
-					tx.inputs = myPotencialInputs;
-					// create outputs
+					// create output
 					final List<Output> outputs = new ArrayList<Output>();
-					final Output output = new Output();
-					output.publicKey = toPublicKey;
-					output.value = qty;
-					outputs.add(output);
+					outputs.add(new Output(toPublicKey, qty));
 					// create your change
 					if (balance > qty) {
 						final Long change = balance - qty;
-						final Output outChange = new Output();
-						outChange.publicKey = me.getPublic();
-						outChange.value = change;
-						outputs.add(outChange);
+						outputs.add(new Output(me.getPublic(), change));
 					}
-					tx.outputs = outputs;
-					U.d(1, "Your tx: " + tx);
+					final Transaction tx = new Transaction(allMyMoney, outputs);
+					U.d(0, "SENT your tx: " + tx);
 					N.toSend = U.serialize(tx);
 				}
 				break;
 
 			}
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
+				| SignatureException | NumberFormatException e) {
 			U.d(1, "****** COMMAND ERROR ******");
 			U.exceptions_count++;
 			U.d(1, "Exceptions count: " + U.exceptions_count);
@@ -179,3 +178,4 @@ public class Main {
 		}
 	}
 }
+// MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEFuMrdFX2D3tLTMZBMdVHZMPzL1K6uMHA9TgiQj4qrCTqUOPshfovUjNXY8YzYsHyPq3FiFdwlZlchCDxAsnbFg

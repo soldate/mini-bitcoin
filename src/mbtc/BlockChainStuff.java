@@ -43,14 +43,12 @@ class B {
 		return true;
 	}
 
-	private static void createCoinbase(final Block candidate) {
-		final Transaction coinbase = new Transaction();
-		coinbase.outputs = new ArrayList<Output>();
-		final Output out = new Output();
-		out.publicKey = Main.me.getPublic();
-		out.value = K.REWARD;
-		coinbase.outputs.add(out);
-		candidate.txs.add(coinbase);
+	// add reward tx in block candidate
+	private static void createCoinbase(final Block candidate)
+			throws InvalidKeyException, SignatureException, IOException {
+		final List<Output> outputs = new ArrayList<Output>();
+		outputs.add(new Output(Main.me.getPublic(), K.REWARD));
+		candidate.txs.add(new Transaction(null, outputs));
 	}
 
 	private static BlockchainInfo getBlockchainInfo(final BigInteger lastBlockHash)
@@ -69,16 +67,20 @@ class B {
 		final List<Transaction> txs = new ArrayList<Transaction>();
 		int txBytesSize = 0;
 		int totalSize = 0;
+		final List<Integer> toRemove = new ArrayList<Integer>();
+		final List<Input> allInputs = new ArrayList<Input>();
+		List<Input> txInputs = null;
 		for (int i = 0; i < mempool.size(); i++) {
-			if (isValidTx(mempool.get(i))) {
+			txInputs = isValidTx(mempool.get(i));
+			if (txInputs != null && Collections.disjoint(allInputs, txInputs)) {
+				allInputs.addAll(txInputs);
 				txBytesSize = U.serialize(mempool.get(i)).length;
-				if ((txBytesSize + totalSize) > (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
 					txs.add(mempool.get(i));
 					totalSize += txBytesSize;
-				} else {
-					break;
 				}
 			}
+			toRemove.add(i);
 		}
 		return txs;
 	}
@@ -88,14 +90,18 @@ class B {
 		return tx.outputs.get(input.outputIndex);
 	}
 
-	private static boolean isValidTx(final Transaction tx) {
+	// return null = return false
+	private static List<Input> isValidTx(final Transaction tx) {
+		List<Input> inputList = null;
 		for (final Input in : tx.inputs) {
 			final Transaction lastTx = bestBlockchainInfo.UTXO.get(in.txHash);
-			if (lastTx == null) return false;
+			if (lastTx == null) return null;
 			final Output out = lastTx.outputs.get(in.outputIndex);
-			if (out == null) return false;
+			if (out == null) return null;
+			if (inputList == null) inputList = new ArrayList<Input>();
+			inputList.add(in);
 		}
-		return true;
+		return inputList;
 	}
 
 	private static BlockchainInfo newBlockchainInfo(final Block block, final BlockchainInfo chainInfo)
@@ -255,10 +261,10 @@ class B {
 
 	static void addTx2MemPool(final Transaction tx) {
 		if (mempool.contains(tx)) return;
-		if (isValidTx(tx)) mempool.add(tx);
+		if (isValidTx(tx) != null) mempool.add(tx);
 	}
 
-	static Block createBlockCandidate() throws IOException {
+	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException {
 		final Block candidate = new Block();
 		candidate.time = System.currentTimeMillis();
 		candidate.lastBlockHash = bestBlockchainInfo.blockHash;
@@ -290,9 +296,7 @@ class B {
 			for (int i = 0; i < tx.outputs.size(); i++) {
 				if (tx.outputs.get(i).publicKey.equals(publicKey)) {
 					if (inputs == null) inputs = new ArrayList<Input>();
-					final Input input = new Input();
-					input.txHash = txHash;
-					input.outputIndex = i;
+					final Input input = new Input(txHash, i);
 					inputs.add(input);
 				}
 			}
