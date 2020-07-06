@@ -15,7 +15,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			U.logVerbosityLevel = 2; // 3 = very verbose
+			U.logVerbosityLevel = 0; // 3 = very verbose
 
 			// read all blocks and create UTXO
 			B.loadBlockchain();
@@ -49,10 +49,10 @@ public class Main {
 			/*
 			 * -- debug tips --
 			 *
-			 * to stop for loop: Inspect "l + K.MINE_ROUND" and set value to "i"
+			 * to stop 'for' loop: Inspect "l + K.MINE_ROUND" and set the value to "i"
 			 *
-			 * to easily mine: change Config.START_TARGET (ex: from 00004 to 00040) OR stop, remove all breakpoints and
-			 * put just one breakpoint in "We mine a NEW BLOCK!" line.
+			 * to easily mine: stop, remove all breakpoints and put just one breakpoint in "We mine a NEW BLOCK!" line
+			 * OR change Config.START_TARGET (ex: from 00004 to 00040)
 			 */
 
 			// mine
@@ -121,11 +121,13 @@ public class Main {
 		U.w("Here is your command list:");
 		U.w("--------------- MENU ----------------");
 		U.w("/menu - Show this.");
-		U.w("/status - Show your node status.");
+		U.w("/balance - Show your balance and more.");
+		U.w("/info - Show your blockchain status.");
 		U.w("/send qty address - Send some mbtc to somebody.");
 		U.w("/mine - On/Off your miner.");
 		U.w("/log number - On/Off log (number = 1, 2 or 3).");
 		U.w("/quit - Exit. :-(");
+		U.w("ADMIN: /mempool /utxo /users");
 		U.w("-------------------------------------");
 	}
 
@@ -136,7 +138,33 @@ public class Main {
 			final List<Input> allMyMoney = B.getMoney(me.getPublic());
 			final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
 
+			int address = me.getPublic().hashCode();
+			String addressStr = Integer.toHexString(address) + "-" + (address % 9);
+
 			switch (args[0]) {
+
+			case "/info":
+				U.w(B.bestBlockchainInfo);
+				break;
+
+			case "/mempool":
+				U.d(0, "------ /mempool ------");
+				for (final Transaction t : B.mempool) U.w(t);
+				U.d(0, "----------------------");
+				break;
+
+			case "/utxo":
+				U.d(0, "------ /utxo ------");
+				for (final Transaction t : B.bestBlockchainInfo.UTXO.values()) U.w(t);
+				U.d(0, "-------------------");
+				break;
+
+			case "/users":
+				U.d(0, "------ /users ------");
+				for (final Integer u : B.bestBlockchainInfo.address2PublicKey.keySet())
+					U.w(Integer.toHexString(u) + "-" + (u % 9));
+				U.d(0, "--------------------");
+				break;
 
 			case "/quit":
 				U.d(0, "------ Thanks! See you! ------");
@@ -152,23 +180,26 @@ public class Main {
 				showMenuOptions();
 				break;
 
-			case "/status":
-				int address = me.getPublic().hashCode();
+			case "/mine":
+				B.startMining = !B.startMining;
+				break;
+
+			case "/balance":
 				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
 				final boolean isValidKey = (p != null) ? p.equals(me.getPublic()) : false;
 				String msg = "";
 				if (p != null && !isValidKey) msg = " Error: Address already in use. Please, delete KeyPair folder.";
 				else if (p == null) msg = " (not valid yet)";
-				U.d(0, "------ /status ------");
-				U.d(0, "balance: " + balance);
-				U.d(0, "address: " + Integer.toHexString(address) + "-" + (address % 9) + msg);
-				U.d(0, "publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
-				U.d(0, "---------------------");
+				U.d(0, "------ /balance ------");
+				U.w("balance: " + balance);
+				U.w("address: " + addressStr + msg);
+				U.w("publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
+				U.d(0, "----------------------");
 				break;
 
 			case "/send":
 				final Long qty = Long.parseLong(args[1]);
-				final String addressStr = args[2];
+				addressStr = args[2];
 				PublicKey toPublicKey = null;
 
 				// if address (or !publicKey) then validate verifying digit (%9)

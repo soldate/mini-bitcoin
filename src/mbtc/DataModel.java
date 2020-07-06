@@ -27,6 +27,11 @@ class BlockchainInfo extends MyObject implements Serializable {
 	BigInteger blockHash;
 	Map<BigInteger, Transaction> UTXO;
 	Map<Integer, PublicKey> address2PublicKey = new HashMap<Integer, PublicKey>();
+
+	@Override
+	public String toString() {
+		return "Info=height:" + height + ";chainWork:" + chainWork + ";target:" + target + ";blockHash:" + blockHash;
+	}
 }
 
 class Input extends MyObject implements Serializable {
