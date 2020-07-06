@@ -4,6 +4,7 @@ import java.io.*;
 import java.math.*;
 import java.nio.file.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.*;
 
 // B = Blockchain
@@ -21,21 +22,34 @@ class B {
 		bestBlockchainInfo.height = 0;
 		bestBlockchainInfo.chainWork = BigInteger.TWO.pow(U.countBitsZero(genesisHash));
 		bestBlockchainInfo.blockHash = genesisHash;
-		bestBlockchainInfo.target = new BigInteger("0000800000000000000000000000000000000000000000000000000000000000",
+		bestBlockchainInfo.target = new BigInteger("0000400000000000000000000000000000000000000000000000000000000000",
 				16);
 		bestBlockchainInfo.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder("UTXO/");
 		saveBlockchainInfo(bestBlockchainInfo);
 	}
 
+	private static void addressMapUpdate(final Map<Integer, PublicKey> address2PublicKey, final Block block)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		for (final Transaction tx : block.txs) {
+			for (final Output out : tx.outputs) {
+				final PublicKey publickey = out.getPublicKey();
+				if (!address2PublicKey.containsKey(publickey.hashCode())) {
+					address2PublicKey.put(publickey.hashCode(), publickey);
+				}
+			}
+		}
+	}
+
 	private static boolean checkInputsTxSignature(final BlockchainInfo chainInfo, final Transaction tx)
-			throws InvalidKeyException, SignatureException, IOException {
+			throws InvalidKeyException, SignatureException, IOException, InvalidKeySpecException,
+			NoSuchAlgorithmException {
 		if (tx.inputs != null) {
 			for (int i = 0; i < tx.inputs.size(); i++) {
 				final Input in = tx.inputs.get(i);
 				final Output out = getOutput(in, chainInfo);
 				if (out == null) return false;
-				if (!C.verify(out.publicKey, tx, tx.signature)) {
+				if (!C.verify(out.getPublicKey(), tx, tx.signature)) {
 					return false;
 				}
 			}
@@ -47,7 +61,7 @@ class B {
 	private static void createCoinbase(final Block candidate)
 			throws InvalidKeyException, SignatureException, IOException {
 		final List<Output> outputs = new ArrayList<Output>();
-		outputs.add(new Output(Main.me.getPublic(), K.REWARD));
+		outputs.add(myOutputReward());
 		candidate.txs.add(new Transaction(null, outputs));
 	}
 
@@ -104,22 +118,40 @@ class B {
 		return inputList;
 	}
 
+	private static Output myOutputReward() {
+		final int myAddress = Main.me.getPublic().hashCode();
+		if (bestBlockchainInfo.address2PublicKey.containsKey(myAddress)) {
+			if (bestBlockchainInfo.address2PublicKey.get(myAddress).equals(Main.me.getPublic())) {
+				return new Output(U.int2BigInt(myAddress), K.REWARD);
+			} else {
+				throw new RuntimeException(
+						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
+			}
+		} else {
+			return new Output(new BigInteger(Main.me.getPublic().getEncoded()), K.REWARD);
+		}
+	}
+
 	private static BlockchainInfo newBlockchainInfo(final Block block, final BlockchainInfo chainInfo)
-			throws IOException, ClassNotFoundException {
+			throws IOException, ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 		final BigInteger blockHash = C.sha(block);
 		final BlockchainInfo newBlockInfo = (BlockchainInfo) U.deepCopy(chainInfo);
 		newBlockInfo.height++;
 		newBlockInfo.blockHash = blockHash;
-		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
-		utxoUpdate(newBlockInfo.UTXO, block);
 
 		if (targetAdjustment(block, newBlockInfo) > 1) {
-			newBlockInfo.target = newBlockInfo.target.add(newBlockInfo.target.shiftRight(4));
-			U.d(2, "DIFF DECREASE 6,25%. target: " + newBlockInfo.target.toString(16));
+			newBlockInfo.target = newBlockInfo.target.add(newBlockInfo.target.shiftRight(6));
+			U.d(2, "DIFF DECREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
 		} else {
-			newBlockInfo.target = newBlockInfo.target.subtract(newBlockInfo.target.shiftRight(4));
-			U.d(2, "DIFF INCREASE 6,25%. target: " + newBlockInfo.target.toString(16));
+			newBlockInfo.target = newBlockInfo.target.subtract(newBlockInfo.target.shiftRight(6));
+			U.d(2, "DIFF INCREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
 		}
+
+		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
+		newBlockInfo.chainWork = newBlockInfo.chainWork.subtract(newBlockInfo.target);
+
+		utxoUpdate(newBlockInfo.UTXO, block);
+		addressMapUpdate(newBlockInfo.address2PublicKey, block);
 
 		return newBlockInfo;
 	}
@@ -199,13 +231,14 @@ class B {
 		}
 	}
 
-	static boolean addBlock(final Block block)
-			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+	static boolean addBlock(final Block block) throws InvalidKeyException, SignatureException, ClassNotFoundException,
+			IOException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return addBlock(block, true, true);
 	}
 
 	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistBlockInfo)
-			throws InvalidKeyException, SignatureException, IOException, ClassNotFoundException {
+			throws InvalidKeyException, SignatureException, IOException, ClassNotFoundException,
+			InvalidKeySpecException, NoSuchAlgorithmException {
 		if (!shouldStartValidation(block)) return false;
 		final BlockchainInfo chainInfo = getBlockchainInfo(block.lastBlockHash);
 
@@ -254,8 +287,8 @@ class B {
 		return true;
 	}
 
-	static boolean addBlockInfo(final Block block)
-			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+	static boolean addBlockInfo(final Block block) throws InvalidKeyException, SignatureException,
+			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return addBlock(block, false, true);
 	}
 
@@ -283,7 +316,7 @@ class B {
 		return balance;
 	}
 
-	static List<Input> getMoney(final PublicKey publicKey) {
+	static List<Input> getMoney(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		List<Input> inputs = null;
 		Transaction tx = null;
 		BigInteger txHash = null;
@@ -294,7 +327,7 @@ class B {
 			txHash = entry.getKey();
 			tx = entry.getValue();
 			for (int i = 0; i < tx.outputs.size(); i++) {
-				if (tx.outputs.get(i).publicKey.equals(publicKey)) {
+				if (tx.outputs.get(i).getPublicKey().equals(publicKey)) {
 					if (inputs == null) inputs = new ArrayList<Input>();
 					final Input input = new Input(txHash, i);
 					inputs.add(input);
@@ -309,13 +342,13 @@ class B {
 	}
 
 	// not used..
-	static boolean isValidBlock(final Block block)
-			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException {
+	static boolean isValidBlock(final Block block) throws InvalidKeyException, SignatureException,
+			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return addBlock(block, false, false);
 	}
 
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
-			InvalidKeyException, SignatureException {
+			InvalidKeyException, SignatureException, InvalidKeySpecException {
 		String fileName = null;
 		x: for (long i = 1; i < Long.MAX_VALUE; i++) {
 			for (long j = 1; j < 10; j++) {

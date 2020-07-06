@@ -2,6 +2,7 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
+import java.nio.*;
 import java.security.*;
 import java.text.*;
 import java.util.*;
@@ -71,6 +72,22 @@ class U {
 			l = random.nextLong();
 		}
 		return l;
+	}
+
+	static BigInteger int2BigInt(final int i) {
+		return new BigInteger(ByteBuffer.allocate(4).putInt(i).array());
+	}
+
+	static boolean isInteger32bits(final BigInteger value) {
+		if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) < 0
+				&& value.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) > 0) {
+			return true;
+		}
+		return false;
+	}
+
+	static BigInteger publicKey2BigInteger(final PublicKey publicKey) {
+		return new BigInteger(publicKey.getEncoded());
 	}
 
 	static byte[] serialize(final Object obj) throws IOException {

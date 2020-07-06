@@ -39,13 +39,6 @@ class C {
 		return kf.generatePrivate(spec);
 	}
 
-	private static PublicKey getPublicKeyFromBytes(final byte[] keyBytes)
-			throws InvalidKeySpecException, NoSuchAlgorithmException {
-		final X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-		final KeyFactory kf = KeyFactory.getInstance(K.ALGO);
-		return kf.generatePublic(spec);
-	}
-
 	private static PublicKey getPublicKeyFromFile(final String filename)
 			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
@@ -76,28 +69,65 @@ class C {
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, IOException {
 		KeyPair keypair = null;
 		PublicKey publicKey = null;
-		String publicKeyString = null; // Base64 except '/' and '+' characters in address (publicKey)
-		do {
+		String publicKeyString = null;
+
+		// generate key until find an "easy to write" address
+		while (publicKeyString == null) {
 			keypair = generateKeyPair();
 			publicKey = keypair.getPublic();
-			U.d(0, "pubsize: " + publicKey.getEncoded().length);
-			U.d(0, "prvsize: " + keypair.getPrivate().getEncoded().length);
 			publicKeyString = Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded());
-		} while (publicKeyString.contains("/") || publicKeyString.contains("+"));
+
+			// if publicKey string is not good.. generate a new keypair
+			if (publicKeyString.contains("/") || publicKeyString.contains("+")) {
+				publicKeyString = null;
+				continue;
+			}
+
+			// if address already exists.. generate a new keypair
+			if (B.bestBlockchainInfo.address2PublicKey.containsKey(publicKey.hashCode())) {
+				publicKeyString = null;
+				continue;
+			}
+		}
 		saveKey(keypair.getPrivate(), "KeyPair/private.key");
 		saveKey(publicKey, "KeyPair/public.key");
 		return keypair;
 	}
 
-	static PublicKey getPublicKeyFromString(final String publicKeyString)
-			throws NoSuchAlgorithmException, InvalidKeySpecException {
-		final byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
+	static BigInteger getAddressOrPublicKey(final PublicKey publicKey) {
+		final int address = publicKey.hashCode();
+		if (B.bestBlockchainInfo.address2PublicKey.get(address) != null) {
+			return U.int2BigInt(address);
+		} else {
+			return U.publicKey2BigInteger(publicKey);
+		}
+	}
+
+	static PublicKey getPublicKey(final byte[] keyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		final BigInteger address = new BigInteger(keyBytes);
+		// is this Address or PublicKey?
+		if (U.isInteger32bits(address)) {
+			final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address.intValue());
+			if (p != null) return p;
+		}
 		return getPublicKeyFromBytes(keyBytes);
+	}
+
+	static PublicKey getPublicKeyFromBytes(final byte[] keyBytes)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		final X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+		final KeyFactory kf = KeyFactory.getInstance(K.ALGO);
+		return kf.generatePublic(spec);
+	}
+
+	static PublicKey getPublicKeyFromString(final String publicKeyOrAddressString)
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		final byte[] keyBytes = Base64.getDecoder().decode(publicKeyOrAddressString);
+		return getPublicKey(keyBytes);
 	}
 
 	static void loadOrCreateKeyPair()
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException, IOException {
-
 		if (new File("KeyPair/private.key").exists()) {
 			U.d(2, "Loading keys");
 			Main.me = loadKeyPairFromFile();
@@ -105,7 +135,6 @@ class C {
 			U.d(2, "Generating keys");
 			Main.me = generateAndSaveKeyPair();
 		}
-
 	}
 
 	static BigInteger sha(final Object o) throws IOException {

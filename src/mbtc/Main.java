@@ -17,10 +17,10 @@ public class Main {
 		try {
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
-			C.loadOrCreateKeyPair();
-
 			// read all blocks and create UTXO
 			B.loadBlockchain();
+
+			C.loadOrCreateKeyPair();
 
 			// p2p. config your server and connect to the seed nodes
 			N.configAsyncP2P();
@@ -52,7 +52,7 @@ public class Main {
 				final BigInteger candidateHash = C.sha(candidate);
 				if (target.compareTo(candidateHash) > 0) {
 					U.d(1, "We mine a NEW BLOCK!");
-					U.d(2, "target:" + target.toString(16));
+					U.d(2, "target       :" + target.toString(16));
 					U.d(2, "candidateHash:" + candidateHash.toString(16));
 					iFoundIt = true;
 					break;
@@ -133,6 +133,7 @@ public class Main {
 				System.exit(0);
 				break;
 
+			// log 0, 1, 2 or 3. 3=Very verbose
 			case "/log":
 				U.logVerbosityLevel = Integer.parseInt(args[1]);
 				break;
@@ -142,25 +143,46 @@ public class Main {
 				break;
 
 			case "/status":
+				final int address = me.getPublic().hashCode();
+				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
+				final boolean isValidKey = (p != null) ? p.equals(me.getPublic()) : false;
+				String msg = "";
+				if (p != null && !isValidKey) msg = " Error: Address already in use. Please, delete KeyPair folder.";
+				else if (p == null) msg = " (not valid yet)";
 				U.d(0, "------ /status ------");
 				U.d(0, "balance: " + balance);
-				U.d(0, "address: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
+				U.d(0, "address: " + Integer.toHexString(address) + "-" + (address % 5) + msg);
+				U.d(0, "publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
 				U.d(0, "---------------------");
 				break;
 
 			case "/send":
 				final Long qty = Long.parseLong(args[1]);
-				final PublicKey toPublicKey = C.getPublicKeyFromString(args[2]);
+				String addressStr = args[2];
+
+				// if address (or !publicKey) then validate verifying digit (%9)
+				if (addressStr.contains("-")) {
+					final String[] account = addressStr.split("-");
+					addressStr = account[0];
+					if (Integer.parseInt(addressStr) % 9 != Integer.parseInt(account[1])) {
+						U.d(0, "------ /send ------");
+						U.d(0, "Error: Invalid Address");
+						U.d(0, "-------------------");
+					}
+				}
+
+				final PublicKey toPublicKey = C.getPublicKeyFromString(addressStr);
 
 				if (balance >= qty) {
 					// create output
 					final List<Output> outputs = new ArrayList<Output>();
-					outputs.add(new Output(toPublicKey, qty));
+					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey), qty));
 					// create your change
 					if (balance > qty) {
 						final Long change = balance - qty;
-						outputs.add(new Output(me.getPublic(), change));
+						outputs.add(new Output(U.int2BigInt(me.getPublic().hashCode()), change));
 					}
+					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs);
 					U.d(0, "SENT your tx: " + tx);
 					N.toSend = U.serialize(tx);
@@ -178,4 +200,6 @@ public class Main {
 		}
 	}
 }
-// MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEFuMrdFX2D3tLTMZBMdVHZMPzL1K6uMHA9TgiQj4qrCTqUOPshfovUjNXY8YzYsHyPq3FiFdwlZlchCDxAsnbFg
+//2020-07-04 12:16:44: balance: 250
+//2020-07-04 12:16:44: address: BSgP
+//2020-07-04 12:16:44: publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEZbwA8DXc3vqk2Sot3rpS6XwH4Zuem1tiaTj0CiV3w9hHadIrZ5A9V3VjoIZJYMuajkR6JIdnzgxUom0zEcCf1g==

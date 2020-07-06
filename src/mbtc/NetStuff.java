@@ -5,15 +5,11 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.*;
 
-class ChannelBuffer {
-	SocketChannel socketChannel = null;
+class Buffer {
 	ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
-
-	public ChannelBuffer(final SocketChannel socketChannel) {
-		this.socketChannel = socketChannel;
-	}
 }
 
 // N = Net = p2p = client and server stuff
@@ -22,7 +18,7 @@ class N {
 	static long lastAction = System.currentTimeMillis();
 	static ByteBuffer p2pReadBuffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	static byte[] toSend;
-	static Map<SocketChannel, ChannelBuffer> p2pChannels = new HashMap<SocketChannel, ChannelBuffer>();
+	static Map<SocketChannel, Buffer> p2pChannels = new HashMap<SocketChannel, Buffer>();
 
 	private static void clientConfigAndConnect() throws IOException {
 		U.d(2, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
@@ -31,7 +27,7 @@ class N {
 			for (final String s : K.SEEDS) {
 				socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
 				socketChannel.configureBlocking(false);
-				p2pChannels.put(socketChannel, new ChannelBuffer(socketChannel));
+				p2pChannels.put(socketChannel, new Buffer());
 				U.d(1, "CLIENT: i am client of SERVER " + s);
 			}
 		}
@@ -43,7 +39,7 @@ class N {
 	}
 
 	private static void readData(final SocketChannel socketChannel) throws IOException {
-		final ChannelBuffer inUse = p2pChannels.get(socketChannel);
+		final Buffer inUse = p2pChannels.get(socketChannel);
 		boolean disconnect = false;
 
 		if (inUse.buffer.remaining() > 0) {
@@ -64,7 +60,8 @@ class N {
 					} else {
 						disconnect = true;
 					}
-				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException e) {
+				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
+						| InvalidKeySpecException | NoSuchAlgorithmException e) {
 					e.printStackTrace();
 					U.exceptions_count++;
 					disconnect = true;
@@ -83,6 +80,20 @@ class N {
 
 	}
 
+	private static boolean sameChannel(final SocketChannel nextChannel, final SocketChannel lastChannel)
+			throws IOException {
+		final SocketAddress nextlocal = nextChannel.getLocalAddress();
+		final SocketAddress nextRemote = nextChannel.getRemoteAddress();
+		final SocketAddress lastLocal = lastChannel.getLocalAddress();
+		final SocketAddress lastRemote = lastChannel.getRemoteAddress();
+
+		if (nextlocal.equals(lastRemote) && nextRemote.equals(lastLocal)) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private static void sendData(final SocketChannel channel) throws IOException, InterruptedException {
 		try {
 			int qty = 0;
@@ -97,11 +108,7 @@ class N {
 	private static ServerSocketChannel serverConfig() throws IOException {
 		U.d(2, "SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
-		try {
-			serverSC.bind(new InetSocketAddress(K.PORT));
-		} catch (final IOException e) {
-			serverSC.bind(new InetSocketAddress(++K.PORT));
-		}
+		serverSC.bind(new InetSocketAddress(K.PORT));
 		serverSC.configureBlocking(false);
 		return serverSC;
 	}
@@ -116,23 +123,28 @@ class N {
 
 		final SocketChannel newChannel = serverSC.accept();
 
+		// this var is just to avoid send twice in local test (sameChannel)
+		SocketChannel lastChannel = null;
+
 		if (newChannel == null) {
-			U.d(3, "...no new connectio..handle the open channels..");
-			for (final SocketChannel s : p2pChannels.keySet()) {
-				if (s.isOpen() && !s.isBlocking()) {
-					if (toSend != null) sendData(s);
-					readData(s);
+			U.d(3, "...no new connection..handle the open channels..");
+			for (final SocketChannel channel : p2pChannels.keySet()) {
+				if (channel.isOpen() && !channel.isBlocking()) {
+					if (toSend != null && lastChannel != null && sameChannel(channel, lastChannel)) {
+						sendData(channel);
+					}
+					readData(channel);
 				} else {
 					U.d(1, "channel is closed or blocking.. DISCONNECTING..");
-					disconnect(s);
+					disconnect(channel);
 				}
+				lastChannel = channel;
 			}
 			toSend = null;
 		} else {
 			U.d(1, "SERVER: *** We have a NEW CLIENT!!! ***");
 			newChannel.configureBlocking(false);
-			p2pChannels.put(newChannel, new ChannelBuffer(newChannel));
+			p2pChannels.put(newChannel, new Buffer());
 		}
-
 	}
 }

@@ -3,6 +3,7 @@ package mbtc;
 import java.io.*;
 import java.math.*;
 import java.security.*;
+import java.security.spec.*;
 import java.util.*;
 
 class Block extends MyObject implements Serializable {
@@ -38,16 +39,20 @@ class Transaction extends MyObject implements Serializable {
 class Output extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	long value;
-	PublicKey publicKey;
+	final BigInteger addressOrPublicKey;
 
-	Output(final PublicKey publicKey, final long value) {
-		this.publicKey = publicKey;
+	Output(final BigInteger addressOrPublicKey, final long value) {
+		this.addressOrPublicKey = addressOrPublicKey;
 		this.value = value;
+	}
+
+	PublicKey getPublicKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return C.getPublicKey(addressOrPublicKey.toByteArray());
 	}
 
 	@Override
 	public String toString() {
-		return Base64.getEncoder().encodeToString(publicKey.getEncoded()).substring(32, 36) + "=" + value;
+		return Base64.getEncoder().encodeToString(addressOrPublicKey.toByteArray()) + "=" + value;
 	}
 }
 
@@ -76,6 +81,7 @@ class BlockchainInfo extends MyObject implements Serializable {
 	BigInteger target;
 	BigInteger blockHash;
 	Map<BigInteger, Transaction> UTXO;
+	Map<Integer, PublicKey> address2PublicKey = new HashMap<Integer, PublicKey>();
 }
 
 class MyObject {
