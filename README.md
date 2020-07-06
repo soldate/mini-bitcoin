@@ -1,11 +1,11 @@
 # mini-bitcoin
 Minimal Bitcoin Implementation (Satoshi White Paper, not Bitcoin Core)
 
-Just small 7 files.
-
-https://bitcoin.org/bitcoin.pdf
+Just small 7 files. Only with the standard java library. No JARs.
 
 Mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
+
+White-paper: https://bitcoin.org/bitcoin.pdf
 
 The goal of this project is to allow any Java programmer to create their own currency.
 
@@ -45,14 +45,32 @@ Go debugging. :-)
 
 No threadssss, just ONE execution line.
 
-You have your wallet, miner, server and client working (p2p) and command terminal.
+You have your wallet(keys), blockchain, miner, server and client working (p2p) and command terminal. All in one.
 
 RPC not ready yet.
 
-# Dont be shine. Fork this. Create your coin!
+# What is address?
+It's just a shortcut to the public key. Once your public key is on the blockchain, you will receive coins using small 
+address, instead of use the large public key.
+
+Example: 
+
+publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEiCEOTeXDzM8lDlj21vmzQxzu9w6aN8f98uq3fSBwBQtL627QBvH0Rk8xsT9leiYtByp815SNPEcxS0cFXEm4IA==
+
+address: 4d744-2
+
+-- You can use (to send 1 mbtc): --
+
+/send 1 MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEiCEOTeXDzM8lDlj21vmzQxzu9w6aN8f98uq3fSBwBQtL627QBvH0Rk8xsT9leiYtByp815SNPEcxS0cFXEm4IA==
+
+-- Or -- (IF the publickey above is already in the blockchain. More than 4 billions of possible addresses)
+
+/send 1 4d744-2 
+
+# Dont be shine. Clone this. Fork this. Create your coin!
 Money must compete in the market, like any good or service.
 
-This is the right thing to do.
+This is the right thing to do (morally speaking). Not one world bitch-coin.
 
 If you need my help, don't hesitate to ask me.
 

@@ -46,6 +46,15 @@ public class Main {
 			final Block candidate = B.createBlockCandidate();
 			final BigInteger target = B.bestBlockchainInfo.target;
 
+			/*
+			 * -- debug tips --
+			 *
+			 * to stop for loop: Inspect "l + K.MINE_ROUND" and set value to "i"
+			 *
+			 * to easily mine: change Config.START_TARGET (ex: from 00004 to 00040) OR stop, remove all breakpoints and
+			 * put just one breakpoint in "We mine a NEW BLOCK!" line.
+			 */
+
 			// mine
 			for (long i = l; i < (l + K.MINE_ROUND); i++) {
 				candidate.nonce = i;
@@ -60,6 +69,7 @@ public class Main {
 			}
 
 			if (iFoundIt) {
+				for (final Transaction t : candidate.txs) B.mempool.remove(t);
 				N.toSend = U.serialize(candidate);
 			}
 		} else {
@@ -143,7 +153,7 @@ public class Main {
 				break;
 
 			case "/status":
-				final int address = me.getPublic().hashCode();
+				int address = me.getPublic().hashCode();
 				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
 				final boolean isValidKey = (p != null) ? p.equals(me.getPublic()) : false;
 				String msg = "";
@@ -151,27 +161,29 @@ public class Main {
 				else if (p == null) msg = " (not valid yet)";
 				U.d(0, "------ /status ------");
 				U.d(0, "balance: " + balance);
-				U.d(0, "address: " + Integer.toHexString(address) + "-" + (address % 5) + msg);
+				U.d(0, "address: " + Integer.toHexString(address) + "-" + (address % 9) + msg);
 				U.d(0, "publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
 				U.d(0, "---------------------");
 				break;
 
 			case "/send":
 				final Long qty = Long.parseLong(args[1]);
-				String addressStr = args[2];
+				final String addressStr = args[2];
+				PublicKey toPublicKey = null;
 
 				// if address (or !publicKey) then validate verifying digit (%9)
-				if (addressStr.contains("-")) {
+				if (addressStr.contains("-") && addressStr.length() <= 8) {
 					final String[] account = addressStr.split("-");
-					addressStr = account[0];
-					if (Integer.parseInt(addressStr) % 9 != Integer.parseInt(account[1])) {
+					address = Integer.parseInt(account[0], 16);
+					toPublicKey = B.bestBlockchainInfo.address2PublicKey.get(address);
+					if (toPublicKey == null || address % 9 != Integer.parseInt(account[1])) {
 						U.d(0, "------ /send ------");
 						U.d(0, "Error: Invalid Address");
 						U.d(0, "-------------------");
 					}
+				} else if (addressStr.length() == 120) {
+					toPublicKey = C.getPublicKeyFromString(addressStr);
 				}
-
-				final PublicKey toPublicKey = C.getPublicKeyFromString(addressStr);
 
 				if (balance >= qty) {
 					// create output
@@ -200,6 +212,3 @@ public class Main {
 		}
 	}
 }
-//2020-07-04 12:16:44: balance: 250
-//2020-07-04 12:16:44: address: BSgP
-//2020-07-04 12:16:44: publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEZbwA8DXc3vqk2Sot3rpS6XwH4Zuem1tiaTj0CiV3w9hHadIrZ5A9V3VjoIZJYMuajkR6JIdnzgxUom0zEcCf1g==

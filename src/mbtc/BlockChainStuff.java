@@ -22,8 +22,7 @@ class B {
 		bestBlockchainInfo.height = 0;
 		bestBlockchainInfo.chainWork = BigInteger.TWO.pow(U.countBitsZero(genesisHash));
 		bestBlockchainInfo.blockHash = genesisHash;
-		bestBlockchainInfo.target = new BigInteger("0000400000000000000000000000000000000000000000000000000000000000",
-				16);
+		bestBlockchainInfo.target = new BigInteger(K.START_TARGET, 16);
 		bestBlockchainInfo.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder("UTXO/");
 		saveBlockchainInfo(bestBlockchainInfo);
@@ -44,14 +43,18 @@ class B {
 	private static boolean checkInputsTxSignature(final BlockchainInfo chainInfo, final Transaction tx)
 			throws InvalidKeyException, SignatureException, IOException, InvalidKeySpecException,
 			NoSuchAlgorithmException {
+		BigInteger signature = null;
 		if (tx.inputs != null) {
 			for (int i = 0; i < tx.inputs.size(); i++) {
 				final Input in = tx.inputs.get(i);
 				final Output out = getOutput(in, chainInfo);
 				if (out == null) return false;
-				if (!C.verify(out.getPublicKey(), tx, tx.signature)) {
+				signature = tx.signature;
+				tx.signature = null;
+				if (!C.verify(out.getPublicKey(), tx, signature)) {
 					return false;
 				}
+				tx.signature = signature;
 			}
 		}
 		return true;
@@ -81,7 +84,6 @@ class B {
 		final List<Transaction> txs = new ArrayList<Transaction>();
 		int txBytesSize = 0;
 		int totalSize = 0;
-		final List<Integer> toRemove = new ArrayList<Integer>();
 		final List<Input> allInputs = new ArrayList<Input>();
 		List<Input> txInputs = null;
 		for (int i = 0; i < mempool.size(); i++) {
@@ -94,7 +96,6 @@ class B {
 					totalSize += txBytesSize;
 				}
 			}
-			toRemove.add(i);
 		}
 		return txs;
 	}
@@ -195,10 +196,12 @@ class B {
 		long s = 0;
 		if (txs.size() > 1) {
 			for (final Transaction tx : txs) {
-				for (final Input in : tx.inputs) {
-					final Output out = getOutput(in, chainInfo);
-					if (out == null) return -1;
-					s += out.value;
+				if (tx.inputs != null) {
+					for (final Input in : tx.inputs) {
+						final Output out = getOutput(in, chainInfo);
+						if (out == null) return -1;
+						s += out.value;
+					}
 				}
 			}
 		}
@@ -221,12 +224,18 @@ class B {
 
 	// clean outputs (block inputs) and add new outputs (block outputs)
 	private static void utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block) throws IOException {
+		boolean tryRemoveLastTx = false;
 		for (final Transaction tx : block.txs) {
 			if (tx.inputs != null) {
 				for (final Input in : tx.inputs) {
 					final Transaction lastTx = UTXO.get(in.txHash);
 					if (lastTx == null) continue;
 					lastTx.outputs.set(in.outputIndex, null); // this output was spend
+					tryRemoveLastTx = true;
+					for (final Output o : lastTx.outputs) {
+						if (o != null) tryRemoveLastTx = false;
+					}
+					if (tryRemoveLastTx) UTXO.remove(in.txHash);
 				}
 			}
 			final BigInteger txHash = C.sha(tx);

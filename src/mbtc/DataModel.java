@@ -12,48 +12,21 @@ class Block extends MyObject implements Serializable {
 	long nonce;
 	BigInteger lastBlockHash;
 	List<Transaction> txs;
-}
-
-class Transaction extends MyObject implements Serializable {
-	private static final long serialVersionUID = 1L;
-	List<Input> inputs;
-	List<Output> outputs;
-	BigInteger signature;
-
-	Transaction(final List<Input> inputs, final List<Output> outputs)
-			throws InvalidKeyException, SignatureException, IOException {
-		this.inputs = inputs;
-		this.outputs = outputs;
-		this.signature = C.sign(this);
-	}
 
 	@Override
 	public String toString() {
-		String s = "";
-		if (inputs != null) s += "IN:" + inputs.toString();
-		if (outputs != null) s += " | OUT:" + outputs.toString();
-		return s;
+		return "Block=time:" + time + ";nonce:" + nonce + ";lastBlockHash:" + lastBlockHash + ";txs:" + txs;
 	}
 }
 
-class Output extends MyObject implements Serializable {
+class BlockchainInfo extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
-	long value;
-	final BigInteger addressOrPublicKey;
-
-	Output(final BigInteger addressOrPublicKey, final long value) {
-		this.addressOrPublicKey = addressOrPublicKey;
-		this.value = value;
-	}
-
-	PublicKey getPublicKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
-		return C.getPublicKey(addressOrPublicKey.toByteArray());
-	}
-
-	@Override
-	public String toString() {
-		return Base64.getEncoder().encodeToString(addressOrPublicKey.toByteArray()) + "=" + value;
-	}
+	long height;
+	BigInteger chainWork;
+	BigInteger target;
+	BigInteger blockHash;
+	Map<BigInteger, Transaction> UTXO;
+	Map<Integer, PublicKey> address2PublicKey = new HashMap<Integer, PublicKey>();
 }
 
 class Input extends MyObject implements Serializable {
@@ -72,16 +45,6 @@ class Input extends MyObject implements Serializable {
 		if (o != null) return o.toString();
 		else return "tx not found";
 	}
-}
-
-class BlockchainInfo extends MyObject implements Serializable {
-	private static final long serialVersionUID = 1L;
-	long height;
-	BigInteger chainWork;
-	BigInteger target;
-	BigInteger blockHash;
-	Map<BigInteger, Transaction> UTXO;
-	Map<Integer, PublicKey> address2PublicKey = new HashMap<Integer, PublicKey>();
 }
 
 class MyObject {
@@ -105,5 +68,51 @@ class MyObject {
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}
+	}
+}
+
+class Output extends MyObject implements Serializable {
+	private static final long serialVersionUID = 1L;
+	long value;
+	final BigInteger addressOrPublicKey;
+
+	Output(final BigInteger addressOrPublicKey, final long value) {
+		this.addressOrPublicKey = addressOrPublicKey;
+		this.value = value;
+	}
+
+	@Override
+	public String toString() {
+		try {
+			return Integer.toHexString(getPublicKey().hashCode()) + "=" + value;
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+	PublicKey getPublicKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return C.getPublicKey(addressOrPublicKey);
+	}
+}
+
+class Transaction extends MyObject implements Serializable {
+	private static final long serialVersionUID = 1L;
+	List<Input> inputs;
+	List<Output> outputs;
+	BigInteger signature;
+
+	Transaction(final List<Input> inputs, final List<Output> outputs)
+			throws InvalidKeyException, SignatureException, IOException {
+		this.inputs = inputs;
+		this.outputs = outputs;
+		this.signature = C.sign(this);
+	}
+
+	@Override
+	public String toString() {
+		String s = "";
+		if (inputs != null) s += "IN:" + inputs.toString();
+		if (outputs != null) s += " | OUT:" + outputs.toString();
+		return s;
 	}
 }

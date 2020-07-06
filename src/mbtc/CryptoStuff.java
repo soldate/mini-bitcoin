@@ -39,6 +39,12 @@ class C {
 		return kf.generatePrivate(spec);
 	}
 
+	private static PublicKey getPublicKey(final byte[] keyBytes)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		final BigInteger address = new BigInteger(keyBytes);
+		return getPublicKey(address);
+	}
+
 	private static PublicKey getPublicKeyFromFile(final String filename)
 			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
@@ -103,14 +109,13 @@ class C {
 		}
 	}
 
-	static PublicKey getPublicKey(final byte[] keyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException {
-		final BigInteger address = new BigInteger(keyBytes);
-		// is this Address or PublicKey?
-		if (U.isInteger32bits(address)) {
-			final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address.intValue());
+	static PublicKey getPublicKey(final BigInteger addressOrPublicKey)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		if (U.isInteger32bits(addressOrPublicKey)) {
+			final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(addressOrPublicKey.intValue());
 			if (p != null) return p;
 		}
-		return getPublicKeyFromBytes(keyBytes);
+		return getPublicKeyFromBytes(addressOrPublicKey.toByteArray());
 	}
 
 	static PublicKey getPublicKeyFromBytes(final byte[] keyBytes)
