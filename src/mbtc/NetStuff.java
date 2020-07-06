@@ -82,6 +82,8 @@ class N {
 
 	private static boolean sameChannel(final SocketChannel nextChannel, final SocketChannel lastChannel)
 			throws IOException {
+		if (lastChannel == null) return false;
+
 		final SocketAddress nextlocal = nextChannel.getLocalAddress();
 		final SocketAddress nextRemote = nextChannel.getRemoteAddress();
 		final SocketAddress lastLocal = lastChannel.getLocalAddress();
@@ -130,7 +132,7 @@ class N {
 			U.d(3, "...no new connection..handle the open channels..");
 			for (final SocketChannel channel : p2pChannels.keySet()) {
 				if (channel.isOpen() && !channel.isBlocking()) {
-					if (toSend != null && lastChannel != null && sameChannel(channel, lastChannel)) {
+					if (toSend != null && !sameChannel(channel, lastChannel)) {
 						sendData(channel);
 					}
 					readData(channel);

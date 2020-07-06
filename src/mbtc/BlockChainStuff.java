@@ -139,6 +139,13 @@ class B {
 		newBlockInfo.height++;
 		newBlockInfo.blockHash = blockHash;
 
+		// work = 2^countBitsZero + (target-hash). Im NOT sure if this calc is correct.
+		// more zero bits = more work
+		// less block hash = more work
+		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
+		newBlockInfo.chainWork = newBlockInfo.chainWork.add(newBlockInfo.target);
+		newBlockInfo.chainWork = newBlockInfo.chainWork.subtract(blockHash);
+
 		if (targetAdjustment(block, newBlockInfo) > 1) {
 			newBlockInfo.target = newBlockInfo.target.add(newBlockInfo.target.shiftRight(6));
 			U.d(2, "DIFF DECREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
@@ -146,9 +153,6 @@ class B {
 			newBlockInfo.target = newBlockInfo.target.subtract(newBlockInfo.target.shiftRight(6));
 			U.d(2, "DIFF INCREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
 		}
-
-		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
-		newBlockInfo.chainWork = newBlockInfo.chainWork.subtract(newBlockInfo.target);
 
 		utxoUpdate(newBlockInfo.UTXO, block);
 		addressMapUpdate(newBlockInfo.address2PublicKey, block);
