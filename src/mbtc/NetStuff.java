@@ -51,11 +51,9 @@ class N {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
 						U.d(2, "READ: we receive a BLOCK");
-						U.d(2, txOrBlock);
 						B.addBlock((Block) txOrBlock);
 					} else if (txOrBlock instanceof Transaction) {
 						U.d(2, "READ: we receive a TRANSACTION");
-						U.d(2, txOrBlock);
 						B.addTx2MemPool((Transaction) txOrBlock);
 					} else {
 						disconnect = true;

@@ -9,13 +9,17 @@ import java.util.*;
 // U = Util; C = CryptoStuff; B = BlockchainStuff; N = NetStuff;
 public class Main {
 
+	// should i start mining or still has blocks to download?
+	static boolean startMining = false;
+
 	// my user = my public and private key
 	static KeyPair me;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			U.logVerbosityLevel = 0; // 3 = very verbose
+			startMining = false;
+			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
 			B.loadBlockchain();
@@ -39,7 +43,7 @@ public class Main {
 
 	private static void mineALittleBit()
 			throws IOException, InvalidKeyException, SignatureException, InterruptedException, ClassNotFoundException {
-		if (B.startMining) {
+		if (startMining) {
 			U.d(3, "mining...");
 			boolean iFoundIt = false;
 			final long l = U.getGoodRandom();
@@ -143,47 +147,6 @@ public class Main {
 
 			switch (args[0]) {
 
-			case "/info":
-				U.w(B.bestBlockchainInfo);
-				break;
-
-			case "/mempool":
-				U.d(0, "------ /mempool ------");
-				for (final Transaction t : B.mempool) U.w(t);
-				U.d(0, "----------------------");
-				break;
-
-			case "/utxo":
-				U.d(0, "------ /utxo ------");
-				for (final Transaction t : B.bestBlockchainInfo.UTXO.values()) U.w(t);
-				U.d(0, "-------------------");
-				break;
-
-			case "/users":
-				U.d(0, "------ /users ------");
-				for (final Integer u : B.bestBlockchainInfo.address2PublicKey.keySet())
-					U.w(Integer.toHexString(u) + "-" + (u % 9));
-				U.d(0, "--------------------");
-				break;
-
-			case "/quit":
-				U.d(0, "------ Thanks! See you! ------");
-				System.exit(0);
-				break;
-
-			// log 0, 1, 2 or 3. 3=Very verbose
-			case "/log":
-				U.logVerbosityLevel = Integer.parseInt(args[1]);
-				break;
-
-			case "/menu":
-				showMenuOptions();
-				break;
-
-			case "/mine":
-				B.startMining = !B.startMining;
-				break;
-
 			case "/balance":
 				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
 				final boolean isValidKey = (p != null) ? p.equals(me.getPublic()) : false;
@@ -232,6 +195,49 @@ public class Main {
 				}
 				break;
 
+			case "/menu":
+				showMenuOptions();
+				break;
+
+			case "/mine":
+				startMining = !startMining;
+				U.d(0, "------ mining " + startMining + " ------");
+				break;
+
+			case "/quit":
+				U.d(0, "------ Thanks! See you! ------");
+				System.exit(0);
+				break;
+
+			// log 0, 1, 2 or 3. 3=Very verbose
+			case "/log":
+				U.logVerbosityLevel = Integer.parseInt(args[1]);
+				U.d(0, "------ verbosity " + U.logVerbosityLevel + " ------");
+				break;
+
+			case "/info":
+				U.w(B.bestBlockchainInfo);
+				break;
+
+			case "/mempool":
+				U.d(0, "------ /mempool ------");
+				for (final Transaction t : B.mempool) U.w(t);
+				U.d(0, "----------------------");
+				break;
+
+			case "/utxo":
+				U.d(0, "------ /utxo ------");
+				for (final Transaction t : B.bestBlockchainInfo.UTXO.values()) U.w(t);
+				U.d(0, "-------------------");
+				break;
+
+			case "/users":
+				U.d(0, "------ /users ------");
+				for (final Integer u : B.bestBlockchainInfo.address2PublicKey.keySet())
+					U.w(Integer.toHexString(u) + "-" + (u % 9));
+				U.d(0, "--------------------");
+				break;
+
 			}
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
 				| SignatureException | NumberFormatException e) {
@@ -243,3 +249,6 @@ public class Main {
 		}
 	}
 }
+
+//address: 5579c-8
+//publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEvsm0KfsuGwRectM65QjUgTqLVGZ7oeep9QfBtes5NLXExotphTKvrghBOg1egZDbVYhYgK6ppPmvLCyz8b5Ywg==

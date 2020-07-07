@@ -9,7 +9,6 @@ import java.util.*;
 
 // B = Blockchain
 class B {
-	static boolean startMining = true; // should i start mining or still has blocks to download?
 
 	// top block of my best blockchain (bigger chainWork = i will mine from this block)
 	static BlockchainInfo bestBlockchainInfo;
@@ -140,7 +139,7 @@ class B {
 		newBlockInfo.height++;
 		newBlockInfo.blockHash = blockHash;
 
-		// work = 2^countBitsZero + (target-hash). Im NOT sure if this calc is correct.
+		// work = 2^countBitsZero + (target-hash). Im NOT sure if this calc is the right thing to do.
 		// more zero bits = more work
 		// less block hash = more work
 		newBlockInfo.chainWork = newBlockInfo.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
@@ -223,24 +222,31 @@ class B {
 	}
 
 	// clean outputs (block inputs) and add new outputs (block outputs)
-	private static void utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block) throws IOException {
+	private static void utxoUpdate(final Map<BigInteger, Transaction> UTXO, final Block block)
+			throws IOException, ClassNotFoundException {
 		boolean tryRemoveLastTx = false;
+		Transaction clone = null;
 		for (final Transaction tx : block.txs) {
 			if (tx.inputs != null) {
 				for (final Input in : tx.inputs) {
 					final Transaction lastTx = UTXO.get(in.txHash);
 					if (lastTx == null) continue;
 					lastTx.outputs.set(in.outputIndex, null); // this output was spend
+					// if all outputs are null, delete tx from utxo
 					tryRemoveLastTx = true;
 					for (final Output o : lastTx.outputs) {
-						if (o != null) tryRemoveLastTx = false;
+						if (o != null) {
+							tryRemoveLastTx = false;
+							break;
+						}
 					}
 					if (tryRemoveLastTx) UTXO.remove(in.txHash);
 				}
 			}
 			final BigInteger txHash = C.sha(tx);
-			tx.inputs = null; // throw inputs away
-			UTXO.put(txHash, tx);
+			clone = (Transaction) U.deepCopy(tx);
+			clone.inputs = null; // utxo dont need inputs
+			UTXO.put(txHash, clone);
 		}
 	}
 
@@ -257,6 +263,9 @@ class B {
 
 		if (chainInfo != null) {
 			final BigInteger blockHash = C.sha(block);
+
+			U.d(0, "BLOCK HASH:" + blockHash);
+
 			// if the work was done, check transactions
 			if (chainInfo.target.compareTo(blockHash) > 0) {
 				if (block.txs != null) {
@@ -266,6 +275,9 @@ class B {
 					final long sumOfInputs = sumOfInputs(chainInfo, block.txs);
 					final long sumOfOutputs = sumOfOutputs(chainInfo, block.txs);
 					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
+
+						U.d(1, "add BLOCK:" + block);
+
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
 
 						if (persistBlock) {
@@ -276,7 +288,7 @@ class B {
 						}
 
 						if (persistBlockInfo && newBlockInfo.chainWork.compareTo(bestBlockchainInfo.chainWork) > 0) {
-							U.d(2, "new bestBlockchainInfo");
+							U.d(2, "new bestBlockchainInfo:" + newBlockInfo);
 							bestBlockchainInfo = newBlockInfo;
 						} else {
 							if (persistBlockInfo) U.d(1, "WARN: this new block is NOT to my best blockchain..");
@@ -306,6 +318,7 @@ class B {
 	}
 
 	static void addTx2MemPool(final Transaction tx) {
+		U.d(2, "add mempool tx:" + tx);
 		if (mempool.contains(tx)) return;
 		if (isValidTx(tx) != null) mempool.add(tx);
 	}
@@ -340,7 +353,7 @@ class B {
 			txHash = entry.getKey();
 			tx = entry.getValue();
 			for (int i = 0; i < tx.outputs.size(); i++) {
-				if (tx.outputs.get(i).getPublicKey().equals(publicKey)) {
+				if (tx.outputs.get(i) != null && tx.outputs.get(i).getPublicKey().equals(publicKey)) {
 					if (inputs == null) inputs = new ArrayList<Input>();
 					final Input input = new Input(txHash, i);
 					inputs.add(input);

@@ -5,7 +5,7 @@ class K {
 	// --------------------------------------------
 	static int PORT = 10762;
 	static final String GENESIS_MSG = "Marconi Pereira Soldate";
-	static final long START_TIME = System.currentTimeMillis();// 1577847600000L; // 2020-01-01
+	static final long START_TIME = 1577847600000L;// System.currentTimeMillis();// 1577847600000L; // 2020-01-01
 	static String[] SEEDS = { "localhost" };
 	// --------------------------------------------
 	static final long BLOCK_TIME = 10 * 60 * 1000; // 10 minutes
@@ -15,5 +15,5 @@ class K {
 	static final String SPEC = "secp256k1";
 	static final String ALGO = "EC";
 	static final long MINE_ROUND = 5 * 10000;
-	static final String START_TARGET = "0000400000000000000000000000000000000000000000000000000000000000";
+	static final String START_TARGET = "0000100000000000000000000000000000000000000000000000000000000000";
 }
