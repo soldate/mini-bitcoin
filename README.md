@@ -17,10 +17,6 @@ Just as a single world government would be a disaster for freedom, so is money.
 
 Bitcoin is centralized in a few big miners and few developers. 
 
-Bitcoin support is done by fake libertarians, blinded by easy money.
-
-Nick, Roger and Craig are just a few more traitors of libertarian movement. 
-
 Join us. Fork this. Create your own cryptocurrency. Freedom!
 
 Bitcoin White-paper: https://bitcoin.org/bitcoin.pdf
