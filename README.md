@@ -3,6 +3,8 @@ Minimal Bitcoin Protocol Implementation (Satoshi White Paper, not Bitcoin Core)
 
 Just small 7 files. Only with the standard java library. No JARs.
 
+Here you have your wallet(keys), blockchain, miner, server and client working (p2p) and command terminal. All in one.
+
 The goal of this project is to allow any Java programmer to create their own currency.
 
 There are about 10 million of Java programmers around the world.
@@ -38,8 +40,6 @@ Put a breakpoint in the first line -> U.logVerbosityLevel = 2;
 Go debugging. :-)
 
 No threadssss, just ONE execution line.
-
-You have your wallet(keys), blockchain, miner, server and client working (p2p) and command terminal. All in one.
 
 RPC not ready yet.
 
