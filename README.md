@@ -33,7 +33,7 @@ Bitcoin White-paper: https://bitcoin.org/bitcoin.pdf
 # Understanding the code
 Inside mbtc.Main you get the "main method" starting point.
 
-Put a breakpoint in the fist line -> U.logVerbosityLevel = 2;
+Put a breakpoint in the first line -> U.logVerbosityLevel = 2;
 
 Go debugging. :-)
 
