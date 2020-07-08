@@ -1,7 +1,9 @@
 # mini-bitcoin
-Minimal Bitcoin Implementation (Satoshi White Paper, not Bitcoin Core)
+Minimal Bitcoin Protocol Implementation (Satoshi White Paper, not Bitcoin Core)
 
-Just small 7 files. Only with the standard java library. No JARs.
+Simple cryptocurrency. Just small 7 files.
+
+Only with the standard java library. No JARs.
 
 Mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
 
