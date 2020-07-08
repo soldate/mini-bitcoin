@@ -1,13 +1,7 @@
 # Mini Bitcoin - Simple cryptocurrency
 Minimal Bitcoin Protocol Implementation (Satoshi White Paper, not Bitcoin Core)
 
-Simple cryptocurrency. Just small 7 files.
-
-Only with the standard java library. No JARs.
-
-Mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
-
-White-paper: https://bitcoin.org/bitcoin.pdf
+Just small 7 files. Only with the standard java library. No JARs.
 
 The goal of this project is to allow any Java programmer to create their own currency.
 
@@ -28,6 +22,8 @@ Bitcoin support is done by fake libertarians, blinded by easy money.
 Nick, Roger and Craig are just a few more traitors of libertarian movement. 
 
 Join us. Fork this. Create your own cryptocurrency. Freedom!
+
+Bitcoin White-paper: https://bitcoin.org/bitcoin.pdf
 
 # How to GO
 1) Install Java Runtime Environment (You probably already have)
