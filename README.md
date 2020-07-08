@@ -1,4 +1,4 @@
-# mini-bitcoin
+# Mini Bitcoin - Simple cryptocurrency
 Minimal Bitcoin Protocol Implementation (Satoshi White Paper, not Bitcoin Core)
 
 Simple cryptocurrency. Just small 7 files.
