@@ -268,7 +268,7 @@ class B {
 
 			// if the work was done, check transactions
 			if (chainInfo.target.compareTo(blockHash) > 0) {
-				if (block.txs != null) {
+				if (block.txs != null) { // null == not even coinbase tx??
 					for (final Transaction tx : block.txs) {
 						if (!checkInputsTxSignature(chainInfo, tx)) return false;
 					}

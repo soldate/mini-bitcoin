@@ -78,6 +78,8 @@ class N {
 
 	}
 
+	// true only if nextlocal == lastRemote AND nextRemote == lastLocal
+	// this is because connect to localhost server (K.SEEDS), creates 2 different channels that are, in fact, equals.
 	private static boolean sameChannel(final SocketChannel nextChannel, final SocketChannel lastChannel)
 			throws IOException {
 		if (lastChannel == null) return false;
@@ -121,9 +123,10 @@ class N {
 	// should i connect, read or send any network messages?
 	static void p2pHandler() throws IOException, InterruptedException {
 
+		// is somebody trying connect to me?
 		final SocketChannel newChannel = serverSC.accept();
 
-		// this var is just to avoid send twice in local test (sameChannel)
+		// this var was created just to avoid send data twice in local test (see sameChannel method)
 		SocketChannel lastChannel = null;
 
 		if (newChannel == null) {

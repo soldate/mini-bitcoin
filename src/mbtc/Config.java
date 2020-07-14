@@ -11,9 +11,15 @@ class K {
 	static final long BLOCK_TIME = 10 * 60 * 1000; // 10 minutes
 	static final long REWARD = 50;
 	static final int MAX_BLOCK_SIZE = 1024 * 1024; // 1 MB
-	static final int MIN_BLOCK_SIZE = 1024; // Block with only coinbase tx. Im NOT sure this value.
+	static final int MIN_BLOCK_SIZE = 1024; // Block with only coinbase tx. Im NOT sure about this value.
 	static final String SPEC = "secp256k1";
 	static final String ALGO = "EC";
+
+	// bigger value means more mining attempts and slow terminal (and net) response to user.
 	static final long MINE_ROUND = 5 * 10000;
+
+	// target is how difficulty is manipulated. find hash starting with bits 0010 (=2) is harder than 0100 (=4)
+	// In another words, smaller target means more difficult to find the block
+	// It is in hexa. Each 0 here means 4 zero bits.
 	static final String START_TARGET = "0000100000000000000000000000000000000000000000000000000000000000";
 }

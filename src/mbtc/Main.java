@@ -6,7 +6,12 @@ import java.security.*;
 import java.security.spec.*;
 import java.util.*;
 
+//-------------------------------------------------
+// How does Bitcoin work? https://learnmeabitcoin.com/
+// White-paper: https://bitcoin.org/bitcoin.pdf
+// -------------------------------------------------
 // U = Util; C = CryptoStuff; B = BlockchainStuff; N = NetStuff;
+//-------------------------------------------------
 public class Main {
 
 	// should i start mining or still has blocks to download?
@@ -18,7 +23,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			startMining = false;
+			startMining = true;
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
@@ -31,8 +36,8 @@ public class Main {
 
 			showMenuOptions();
 
-			// run forever ("while(true)" inside)
-			run();
+			// "while(true)" inside
+			runForever();
 
 		} catch (IOException | InterruptedException | NoSuchAlgorithmException | InvalidKeySpecException
 				| ClassNotFoundException | InvalidKeyException | SignatureException
@@ -56,7 +61,7 @@ public class Main {
 			 * to stop 'for' loop: Inspect "l + K.MINE_ROUND" and set the value to "i"
 			 *
 			 * to easily mine: stop, remove all breakpoints and put just one breakpoint in "We mine a NEW BLOCK!" line
-			 * OR change Config.START_TARGET (ex: from 00004 to 00040)
+			 * OR change Config.START_TARGET (ex: from 00001.. to 00100..)
 			 */
 
 			// mine
@@ -83,7 +88,7 @@ public class Main {
 	}
 
 	// Async! Read terminal, send/receive networks messages, mine a little bit and do it all again and again.
-	private static void run()
+	private static void runForever()
 			throws InterruptedException, IOException, InvalidKeyException, SignatureException, ClassNotFoundException {
 
 		final BufferedReader ttyReader = new BufferedReader(new InputStreamReader(System.in));
@@ -139,9 +144,9 @@ public class Main {
 		try {
 			final String args[] = readLine.split(" ");
 
+			// 'balance' and 'send' commands need this info below (4 lines). So.. do it always, no matter the command.
 			final List<Input> allMyMoney = B.getMoney(me.getPublic());
 			final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
-
 			int address = me.getPublic().hashCode();
 			String addressStr = Integer.toHexString(address) + "-" + (address % 9);
 
@@ -249,6 +254,7 @@ public class Main {
 		}
 	}
 }
-
-//address: 5579c-8
-//publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEvsm0KfsuGwRectM65QjUgTqLVGZ7oeep9QfBtes5NLXExotphTKvrghBOg1egZDbVYhYgK6ppPmvLCyz8b5Ywg==
+// testing
+//balance: 150
+//address: 53ad9-7
+//publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEBc3xv9TlO4wyUSWHhOBYkrSeQzNcOFzbssiXt91uBaIoafrfTVRYX9PQliAtC87DiBhAlj3eNNIev8ywFOAYmg==
