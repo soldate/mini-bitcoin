@@ -1,11 +1,9 @@
-# mini-bitcoin
-Minimal Bitcoin Implementation (Satoshi White Paper, not Bitcoin Core)
+# Mini Bitcoin - Simple cryptocurrency
+Minimal Bitcoin Protocol Implementation (Satoshi White Paper, not Bitcoin Core)
 
 Just small 7 files. Only with the standard java library. No JARs.
 
-Mini-bitcoin is a simple bitcoin protocol implementation (except Merkle tree and script language)
-
-White-paper: https://bitcoin.org/bitcoin.pdf
+Here you have your wallet(keys), blockchain, miner, server and client working (p2p) and command terminal. All in one.
 
 The goal of this project is to allow any Java programmer to create their own currency.
 
@@ -21,11 +19,9 @@ Just as a single world government would be a disaster for freedom, so is money.
 
 Bitcoin is centralized in a few big miners and few developers. 
 
-Bitcoin support is done by fake libertarians, blinded by easy money.
-
-Nick, Roger and Craig are just a few more traitors of libertarian movement. 
-
 Join us. Fork this. Create your own cryptocurrency. Freedom!
+
+Bitcoin White-paper: https://bitcoin.org/bitcoin.pdf
 
 # How to GO
 1) Install Java Runtime Environment (You probably already have)
@@ -39,13 +35,11 @@ Join us. Fork this. Create your own cryptocurrency. Freedom!
 # Understanding the code
 Inside mbtc.Main you get the "main method" starting point.
 
-Put a breakpoint in the fist line -> U.logVerbosityLevel = 2;
+Put a breakpoint in the first line -> U.logVerbosityLevel = 2;
 
 Go debugging. :-)
 
 No threadssss, just ONE execution line.
-
-You have your wallet(keys), blockchain, miner, server and client working (p2p) and command terminal. All in one.
 
 RPC not ready yet.
 
