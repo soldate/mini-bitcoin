@@ -23,7 +23,6 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			startMining = true;
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
@@ -113,9 +112,13 @@ public class Main {
 	private static void shouldIDoSomethingNow(final long now) {
 		final long secondsFromLastAction = (now - N.lastAction) / 1000;
 
-		if (secondsFromLastAction > 10) {
-			U.d(3, "Should i do something? More than 10s passed doing nothing (just mining)...");
+		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing (or just mining)
+			U.d(3, "Should i do something?");
 			// do something...
+			if (!startMining) {
+				startMining = true;
+				U.d(0, "Starting mining...");
+			}
 			N.lastAction = now;
 		}
 	}
