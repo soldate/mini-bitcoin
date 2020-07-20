@@ -39,20 +39,12 @@ No threadssss, just ONE execution line.
 RPC not ready yet.
 
 ## Docker
-You can make
+Start two nodes to check how the peers exchange messages
 
 ```
-$ docker build .
-```
-to create a docker image.
-And/Or 
-
-```
+$ docker-compose build
 $ docker-compose up
 ```
-
-To start two nodes and check how the peers comunicate
-
 
 ## What is address?
 It's just a shortcut to the public key. Once your public key is on the blockchain, you will receive coins using small 

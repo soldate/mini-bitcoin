@@ -25,10 +25,14 @@ class N {
 		SocketChannel socketChannel = null;
 		if (K.SEEDS != null) {
 			for (final String s : K.SEEDS) {
-				socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
-				socketChannel.configureBlocking(false);
-				p2pChannels.put(socketChannel, new Buffer());
-				U.d(1, "CLIENT: i am client of SERVER " + s);
+				try {
+					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
+					socketChannel.configureBlocking(false);
+					p2pChannels.put(socketChannel, new Buffer());
+					U.d(1, "CLIENT: i am client of SERVER " + s);
+				} catch (final UnresolvedAddressException e) {
+					U.d(1, "ERROR: can NOT connect to SERVER " + s);
+				}
 			}
 		}
 	}

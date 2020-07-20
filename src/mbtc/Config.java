@@ -6,7 +6,7 @@ class K {
 	static int PORT = 10762;
 	static final String GENESIS_MSG = "Marconi Pereira Soldate";
 	static final long START_TIME = 1577847600000L;// System.currentTimeMillis();// 1577847600000L; // 2020-01-01
-	static String[] SEEDS = { "localhost" };
+	static String[] SEEDS = { "localhost", "seed" }; // "seed" for docker-compose network
 	// --------------------------------------------
 	static final long BLOCK_TIME = 10 * 60 * 1000; // 10 minutes
 	static final long REWARD = 50;
