@@ -39,7 +39,9 @@ No threadssss, just ONE execution line.
 RPC not ready yet.
 
 ## Docker
-Start two nodes to check how the peers exchange messages
+Start two nodes to check how the peers exchange messages. 
+
+WARNING: Clean Blockchain/KeyPair/UTXO folders before build.
 
 ```
 $ docker-compose build
