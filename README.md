@@ -73,11 +73,10 @@ Or (IF the publickey is not in the blockchain yet.)
 
 More than 4 billions of possible addresses.
 
-## Dont be shine. Clone this. Fork this. Create your coin!
-Money must compete in the market, like any good or service.
-
-This is the right thing to do, not one world bitch-coin.
+## Help
 
 If you need my help, don't hesitate to ask me.
+
+[My twitter](https://twitter.com/_oliberal)
 
 Enjoy!
