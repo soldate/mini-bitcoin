@@ -68,13 +68,16 @@ address: 4d744-2
 You can use (to send 1 mbtc):
 
 ```
-/send 1 MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEiCEOTeXDzM8lDlj21vmzQxzu9w6aN8f98uq3fSBwBQtL627QBvH0Rk8xsT9leiYtByp815SNPEcxS0cFXEm4IA==
-```
-Or (IF the publickey above is already in the blockchain. More than 4 billions of possible addresses)
-
-```
 /send 1 4d744-2 
 ```
+
+Or (IF the publickey is not in the blockchain yet.)
+
+```
+/send 1 MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEiCEOTeXDzM8lDlj21vmzQxzu9w6aN8f98uq3fSBwBQtL627QBvH0Rk8xsT9leiYtByp815SNPEcxS0cFXEm4IA==
+```
+
+More than 4 billions of possible addresses.
 
 ## Dont be shine. Clone this. Fork this. Create your coin!
 Money must compete in the market, like any good or service.
