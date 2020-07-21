@@ -19,9 +19,9 @@ class B {
 		final BigInteger genesisHash = new BigInteger(1, C.sha256.digest(K.GENESIS_MSG.getBytes()));
 		bestBlockchainInfo = new BlockchainInfo();
 		bestBlockchainInfo.height = 0;
-		bestBlockchainInfo.chainWork = BigInteger.TWO.pow(U.countBitsZero(genesisHash));
+		bestBlockchainInfo.chainWork = BigInteger.ZERO;
 		bestBlockchainInfo.blockHash = genesisHash;
-		bestBlockchainInfo.target = new BigInteger(K.START_TARGET, 16);
+		bestBlockchainInfo.target = new BigInteger(K.INITIAL_TARGET, 16);
 		bestBlockchainInfo.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder("UTXO/");
 		saveBlockchainInfo(bestBlockchainInfo);

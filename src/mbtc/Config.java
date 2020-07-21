@@ -1,7 +1,7 @@
 package mbtc;
 
 class K {
-	// To create your own coin, change PORT, GENESIS_MSG and set START_TIME as a fixed timestamp.
+	// To create your own coin, change PORT, GENESIS_MSG, SEEDS (IPs) and set START_TIME as a fixed timestamp.
 	// --------------------------------------------
 	static int PORT = 10762;
 	static final String GENESIS_MSG = "Marconi Pereira Soldate";
@@ -19,7 +19,8 @@ class K {
 	static final long MINE_ROUND = 5 * 10000;
 
 	// target is how difficulty is manipulated. find hash starting with bits 0010 (=2) is harder than 0100 (=4)
-	// In another words, smaller target means more difficult to find the block
+	// In another words, smaller target means more difficult to find the block (valid hash)
 	// It is in hexa. Each 0 here means 4 zero bits.
-	static final String START_TARGET = "0000100000000000000000000000000000000000000000000000000000000000";
+	static final String INITIAL_TARGET = "0000ffff00000000000000000000000000000000000000000000000000000000";
+	static final String BITCOIN_TARGET = "00000000ffff0000000000000000000000000000000000000000000000000000";
 }
