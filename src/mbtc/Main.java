@@ -47,8 +47,8 @@ public class Main {
 		}
 	}
 
-	private static void mineALittleBit()
-			throws IOException, InvalidKeyException, SignatureException, InterruptedException, ClassNotFoundException {
+	private static void mineALittleBit() throws IOException, InvalidKeyException, SignatureException,
+			InterruptedException, ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 		if (startMining) {
 			U.d(3, "mining...");
 			boolean iFoundIt = false;
@@ -79,8 +79,7 @@ public class Main {
 			}
 
 			if (iFoundIt) {
-				for (final Transaction t : candidate.txs) B.mempool.remove(t);
-				N.toSend(null, U.serialize(candidate));
+				B.addBlock(candidate, null);
 			}
 		} else {
 			// take a breath
@@ -89,8 +88,8 @@ public class Main {
 	}
 
 	// Async! Read terminal, send/receive networks messages, mine a little bit and do it all again and again.
-	private static void runForever()
-			throws InterruptedException, IOException, InvalidKeyException, SignatureException, ClassNotFoundException {
+	private static void runForever() throws InterruptedException, IOException, InvalidKeyException, SignatureException,
+			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 
 		final BufferedReader ttyReader = new BufferedReader(new InputStreamReader(System.in));
 

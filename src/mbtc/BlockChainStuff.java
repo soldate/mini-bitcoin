@@ -265,8 +265,6 @@ class B {
 		if (chainInfo != null) {
 			final BigInteger blockHash = C.sha(block);
 
-			U.d(0, "BLOCK HASH:" + blockHash);
-
 			// if the work was done, check transactions
 			if (chainInfo.target.compareTo(blockHash) > 0) {
 				if (block.txs != null) { // null == not even coinbase tx??
@@ -283,6 +281,9 @@ class B {
 
 						if (persistBlock) {
 							saveBlock(newBlockInfo, block);
+
+							// clean mempool
+							for (final Transaction t : block.txs) B.mempool.remove(t);
 						}
 						if (persistBlockInfo) {
 							saveBlockchainInfo(newBlockInfo);
