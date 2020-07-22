@@ -10,7 +10,6 @@ import java.util.*;
 // U = Util
 class U {
 
-	static boolean DEBUG_MODE = true; // show messages
 	static int logVerbosityLevel = 1;
 	static final SecureRandom random = new SecureRandom();
 	static SimpleDateFormat simpleDateFormat;
@@ -51,7 +50,7 @@ class U {
 	}
 
 	static void d(final int log, final Object o) {
-		if (DEBUG_MODE && o != null && log <= logVerbosityLevel) U.p(o);
+		if (K.DEBUG_MODE && o != null && log <= logVerbosityLevel) U.p(o);
 	}
 
 	static Object deepCopy(final Object o) throws ClassNotFoundException, IOException {
@@ -97,8 +96,12 @@ class U {
 		return out.toByteArray();
 	}
 
+	static void sleep(final long millis) throws InterruptedException {
+		Thread.sleep(millis);
+	}
+
 	static void sleep() throws InterruptedException {
-		Thread.sleep(2500);
+		sleep(2500);
 	}
 
 	static void w(final Object o) {
