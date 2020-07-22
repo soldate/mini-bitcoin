@@ -27,21 +27,27 @@ class N {
 	static Map<SocketChannel, Buffer> p2pChannels = new HashMap<SocketChannel, Buffer>();
 
 	private static void clientConfigAndConnect() throws IOException {
-		U.d(2, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
+		U.d(3, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
 		SocketChannel socketChannel = null;
+
+		final InetAddress myIp = InetAddress.getLocalHost();
+
 		if (K.SEEDS != null) {
 			for (final String s : K.SEEDS) {
 				try {
+					final InetAddress server = InetAddress.getByName(s);
+
+					// Am i trying to connect to myself?
+					if (server.getHostAddress().contains(myIp.getHostAddress())) {
+						continue;
+					}
 					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
 					socketChannel.configureBlocking(false);
 					p2pChannels.put(socketChannel, new Buffer());
-					U.d(1, "CLIENT: i am client of SERVER " + s);
+					U.d(1, "CLIENT: i am client of SERVER " + socketChannel.getRemoteAddress());
 				} catch (final UnresolvedAddressException e) {
 					U.d(1, "WARN: can NOT connect to SERVER " + s);
 				}
-			}
-			for (final SocketChannel x : p2pChannels.keySet()) {
-				U.d(1, x.getRemoteAddress().toString());
 			}
 		}
 	}
@@ -106,7 +112,7 @@ class N {
 	}
 
 	private static ServerSocketChannel serverConfig() throws IOException {
-		U.d(2, "SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
+		U.d(3, "SERVER: p2p = you are client AND server. SERVER async CONFIG is here.");
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
 		try {
 			serverSC.configureBlocking(false);

@@ -23,7 +23,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			// K.SEEDS[0] = "localhost"; // uncomment for local test
+			// K.SEEDS[0] = "localhost"; // uncomment for local test. comment for docker-compose test
 
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
@@ -71,8 +71,6 @@ public class Main {
 				final BigInteger candidateHash = C.sha(candidate);
 				if (target.compareTo(candidateHash) > 0) {
 					U.d(1, "We mine a NEW BLOCK!");
-					U.d(2, "target       :" + target.toString(16));
-					U.d(2, "candidateHash:" + candidateHash.toString(16));
 					iFoundIt = true;
 					break;
 				}

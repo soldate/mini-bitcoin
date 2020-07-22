@@ -134,10 +134,10 @@ class C {
 	static void loadOrCreateKeyPair()
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException, IOException {
 		if (new File("KeyPair/private.key").exists()) {
-			U.d(2, "Loading keys");
+			U.d(3, "Loading keys");
 			Main.me = loadKeyPairFromFile();
 		} else {
-			U.d(2, "Generating keys");
+			U.d(3, "Generating keys");
 			Main.me = generateAndSaveKeyPair();
 		}
 	}

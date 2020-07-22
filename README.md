@@ -26,10 +26,10 @@ Fork this. Create your own cryptocurrency!
 ## Understanding the code
 Inside mbtc.Main you get the "main method" starting point.
 
-Put a breakpoint in the first line 
+Uncomment an put a breakpoint in the first line 
 
 ```
-* U.logVerbosityLevel = 2;
+* K.SEEDS[0] = "localhost";
 ```
 
 Go debugging. :-)
@@ -41,7 +41,14 @@ RPC not ready yet.
 ## Docker
 Start two nodes to check how the peers exchange messages. 
 
-WARNING: Clean Blockchain/KeyPair/UTXO folders before build.
+WARNING: 
+* Clean Blockchain/KeyPair/UTXO folders before build.
+* Comment this line in Main.java
+
+``` 
+// K.SEEDS[0] = "localhost";
+```
+Then
 
 ```
 $ docker-compose build
