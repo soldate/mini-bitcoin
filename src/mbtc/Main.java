@@ -23,6 +23,8 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
+			// K.SEEDS[0] = "localhost"; // uncomment for local test
+
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
@@ -78,7 +80,7 @@ public class Main {
 
 			if (iFoundIt) {
 				for (final Transaction t : candidate.txs) B.mempool.remove(t);
-				N.toSend = U.serialize(candidate);
+				N.toSend(null, U.serialize(candidate));
 			}
 		} else {
 			// take a breath
@@ -199,7 +201,7 @@ public class Main {
 					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs);
 					U.d(0, "SENT your tx: " + tx);
-					N.toSend = U.serialize(tx);
+					N.toSend(null, U.serialize(tx));
 				}
 				break;
 

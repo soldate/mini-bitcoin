@@ -2,6 +2,7 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
+import java.nio.channels.*;
 import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
@@ -250,14 +251,14 @@ class B {
 		}
 	}
 
-	static boolean addBlock(final Block block) throws InvalidKeyException, SignatureException, ClassNotFoundException,
-			IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		return addBlock(block, true, true);
+	static boolean addBlock(final Block block, final SocketChannel from) throws InvalidKeyException, SignatureException,
+			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+		return addBlock(block, true, true, from);
 	}
 
-	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistBlockInfo)
-			throws InvalidKeyException, SignatureException, IOException, ClassNotFoundException,
-			InvalidKeySpecException, NoSuchAlgorithmException {
+	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistBlockInfo,
+			final SocketChannel from) throws InvalidKeyException, SignatureException, IOException,
+			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 		if (!shouldStartValidation(block)) return false;
 		final BlockchainInfo chainInfo = getBlockchainInfo(block.lastBlockHash);
 
@@ -293,6 +294,10 @@ class B {
 						} else {
 							if (persistBlockInfo) U.d(1, "WARN: this new block is NOT to my best blockchain..");
 						}
+
+						if (persistBlock && persistBlockInfo) {
+							N.toSend(from, U.serialize(block));
+						}
 					} else {
 						U.d(1, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
 						return false;
@@ -314,7 +319,7 @@ class B {
 
 	static boolean addBlockInfo(final Block block) throws InvalidKeyException, SignatureException,
 			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		return addBlock(block, false, true);
+		return addBlock(block, false, true, null);
 	}
 
 	static void addTx2MemPool(final Transaction tx) {
@@ -370,7 +375,7 @@ class B {
 	// not used..
 	static boolean isValidBlock(final Block block) throws InvalidKeyException, SignatureException,
 			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		return addBlock(block, false, false);
+		return addBlock(block, false, false, null);
 	}
 
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
