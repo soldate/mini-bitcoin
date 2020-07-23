@@ -39,6 +39,7 @@ class N {
 
 					// Am i trying to connect to myself?
 					if (server.getHostAddress().contains(myIp.getHostAddress())) {
+						U.d(1, "WARN: do NOT connect to yourself");
 						continue;
 					}
 					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
@@ -52,14 +53,21 @@ class N {
 		}
 	}
 
+	private static void disconnectDebug(final SocketChannel channel) throws IOException {
+		U.d(1, "channel is closed or blocking.. DISCONNECTING..");
+		disconnect(channel);
+	}
+
 	private static void disconnect(final SocketChannel channel) throws IOException {
 		p2pChannels.remove(channel);
 		channel.close();
 	}
 
-	private static void readData(final SocketChannel socketChannel) throws IOException {
+	private static boolean readData(final SocketChannel socketChannel) throws IOException {
+
 		final Buffer inUse = p2pChannels.get(socketChannel);
 		boolean disconnect = false;
+		boolean read = false;
 
 		if (inUse.buffer.remaining() > 0) {
 			final int qty = socketChannel.read(inUse.buffer);
@@ -69,11 +77,11 @@ class N {
 				try {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
-						U.d(2, "READ: we receive a BLOCK");
-						B.addBlock((Block) txOrBlock, socketChannel);
+						U.d(2, "READ: we receive a BLOCK from " + socketChannel);
+						read = B.addBlock((Block) txOrBlock, socketChannel);
 					} else if (txOrBlock instanceof Transaction) {
-						U.d(2, "READ: we receive a TRANSACTION");
-						B.addTx2MemPool((Transaction) txOrBlock);
+						U.d(2, "READ: we receive a TRANSACTION from " + socketChannel);
+						read = B.addTx2MemPool((Transaction) txOrBlock);
 					} else {
 						disconnect = true;
 					}
@@ -92,19 +100,24 @@ class N {
 		}
 
 		if (disconnect) {
+			U.d(1, "WARN: DISCONNECTING " + socketChannel);
 			disconnect(socketChannel);
 		}
 
+		return read;
 	}
 
 	private static void sendData(final SocketChannel channel) throws IOException, InterruptedException {
 		try {
 			// do NOT send back the same data you received
-			if (channel.equals(ToSend.dataFrom)) return;
+			if (channel.equals(ToSend.dataFrom)) {
+				U.d(1, "WARN: do NOT send data back to origin");
+				return;
+			}
 
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(ToSend.data));
-			U.d(2, "SEND: wrote " + qty + " bytes");
+			U.d(2, "SEND: wrote " + qty + " bytes to " + channel);
 		} catch (final IOException e) {
 			U.d(1, "Other side DISCONNECT.. closing channel..");
 			disconnect(channel);
@@ -137,15 +150,25 @@ class N {
 
 		if (newChannel == null) {
 			U.d(3, "...no new connection..handle the open channels..");
-			for (final SocketChannel channel : p2pChannels.keySet()) {
-				if (channel.isOpen() && !channel.isBlocking()) {
-					if (getDataToSend() != null) sendData(channel);
-					readData(channel);
-				} else {
-					U.d(1, "channel is closed or blocking.. DISCONNECTING..");
-					disconnect(channel);
+			// if i have nothing to send, read all channels
+			if (getDataToSend() == null) {
+				for (final SocketChannel channel : p2pChannels.keySet()) {
+					if (channel.isOpen() && !channel.isBlocking()) {
+						if (readData(channel)) break;
+					} else {
+						disconnectDebug(channel);
+					}
 				}
-				// lastChannel = channel;
+			}
+			// if tx or block was read or mined, send that to all
+			if (getDataToSend() != null) {
+				for (final SocketChannel channel : p2pChannels.keySet()) {
+					if (channel.isOpen() && !channel.isBlocking()) {
+						sendData(channel);
+					} else {
+						disconnectDebug(channel);
+					}
+				}
 			}
 			cleanDataToSend();
 		} else {

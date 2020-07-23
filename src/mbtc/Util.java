@@ -74,7 +74,7 @@ class U {
 	}
 
 	static BigInteger int2BigInt(final int i) {
-		return new BigInteger(ByteBuffer.allocate(4).putInt(i).array());
+		return new BigInteger(1, ByteBuffer.allocate(4).putInt(i).array());
 	}
 
 	static boolean isInteger32bits(final BigInteger value) {
@@ -86,7 +86,7 @@ class U {
 	}
 
 	static BigInteger publicKey2BigInteger(final PublicKey publicKey) {
-		return new BigInteger(publicKey.getEncoded());
+		return new BigInteger(1, publicKey.getEncoded());
 	}
 
 	static byte[] serialize(final Object obj) throws IOException {

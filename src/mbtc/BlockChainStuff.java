@@ -129,7 +129,7 @@ class B {
 						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
 			}
 		} else {
-			return new Output(new BigInteger(Main.me.getPublic().getEncoded()), K.REWARD);
+			return new Output(new BigInteger(1, Main.me.getPublic().getEncoded()), K.REWARD);
 		}
 	}
 
@@ -275,9 +275,9 @@ class B {
 					final long sumOfOutputs = sumOfOutputs(chainInfo, block.txs);
 					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
 
-						U.d(1, "add BLOCK:" + block);
-
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
+
+						U.d(1, "add BLOCK:" + block);
 
 						if (persistBlock) {
 							saveBlock(newBlockInfo, block);
@@ -323,10 +323,14 @@ class B {
 		return addBlock(block, false, true, null);
 	}
 
-	static void addTx2MemPool(final Transaction tx) {
+	static boolean addTx2MemPool(final Transaction tx) {
 		U.d(2, "add mempool tx:" + tx);
-		if (mempool.contains(tx)) return;
-		if (isValidTx(tx) != null) mempool.add(tx);
+		if (mempool.contains(tx)) return false;
+		if (isValidTx(tx) != null) {
+			mempool.add(tx);
+			return true;
+		}
+		return false;
 	}
 
 	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException {

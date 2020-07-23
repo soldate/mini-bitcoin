@@ -1,0 +1,64 @@
+version: '3'
+services:
+
+  seed:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    container_name: seed
+    ports:
+      - "10762:10762"
+    networks:
+      - my-network
+
+  client:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    container_name: client
+    ports:
+      - "10763:10762"
+    networks:
+      - my-network
+    depends_on:
+      - "seed"
+
+  client2:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    container_name: client2
+    ports:
+      - "10764:10762"
+    networks:
+      - my-network
+    depends_on:
+      - "seed"
+
+  client3:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    container_name: client3
+    ports:
+      - "10765:10762"
+    networks:
+      - my-network
+    depends_on:
+      - "seed"
+
+  client4:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    container_name: client4
+    ports:
+      - "10766:10762"
+    networks:
+      - my-network
+    depends_on:
+      - "seed"
+
+networks:
+  my-network:
+    driver: bridge

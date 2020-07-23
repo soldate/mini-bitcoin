@@ -41,7 +41,7 @@ class C {
 
 	private static PublicKey getPublicKey(final byte[] keyBytes)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
-		final BigInteger address = new BigInteger(keyBytes);
+		final BigInteger address = new BigInteger(1, keyBytes);
 		return getPublicKey(address);
 	}
 
@@ -147,7 +147,7 @@ class C {
 	}
 
 	static BigInteger sign(final Transaction tx) throws InvalidKeyException, SignatureException, IOException {
-		return new BigInteger(C.sign(U.serialize(tx)));
+		return new BigInteger(1, C.sign(U.serialize(tx)));
 	}
 
 	static void sleep() throws InterruptedException {
