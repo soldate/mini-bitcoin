@@ -78,7 +78,7 @@ public class Main {
 
 			if (iFoundIt) {
 				B.addBlock(candidate, null);
-				if (K.DEBUG_MODE) U.sleep(10 * 1000); // wait 10s to increase chain split chance
+				if (K.DEBUG_MODE) U.sleep(3 * 1000); // wait 3s to increase chain split chance
 			}
 		} else {
 			// take a breath

@@ -147,7 +147,7 @@ class C {
 	}
 
 	static BigInteger sign(final Transaction tx) throws InvalidKeyException, SignatureException, IOException {
-		return new BigInteger(1, C.sign(U.serialize(tx)));
+		return new BigInteger(C.sign(U.serialize(tx)));
 	}
 
 	static void sleep() throws InterruptedException {

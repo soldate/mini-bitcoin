@@ -129,7 +129,7 @@ class B {
 						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
 			}
 		} else {
-			return new Output(new BigInteger(1, Main.me.getPublic().getEncoded()), K.REWARD);
+			return new Output(new BigInteger(Main.me.getPublic().getEncoded()), K.REWARD);
 		}
 	}
 

@@ -86,7 +86,7 @@ class U {
 	}
 
 	static BigInteger publicKey2BigInteger(final PublicKey publicKey) {
-		return new BigInteger(1, publicKey.getEncoded());
+		return new BigInteger(publicKey.getEncoded());
 	}
 
 	static byte[] serialize(final Object obj) throws IOException {
