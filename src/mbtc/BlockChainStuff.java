@@ -149,10 +149,10 @@ class B {
 
 		if (targetAdjustment(block, newBlockInfo) > 1) {
 			newBlockInfo.target = newBlockInfo.target.add(newBlockInfo.target.shiftRight(6));
-			U.d(2, "DIFF DECREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
+			U.d(3, "INFO: DIFF DECREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
 		} else {
 			newBlockInfo.target = newBlockInfo.target.subtract(newBlockInfo.target.shiftRight(6));
-			U.d(2, "DIFF INCREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
+			U.d(3, "INFO: DIFF INCREASE 1.5625%. target: " + newBlockInfo.target.toString(16));
 		}
 
 		utxoUpdate(newBlockInfo.UTXO, block);
@@ -186,7 +186,7 @@ class B {
 		final BigInteger blockHash = C.sha(block);
 		final String fileName = "UTXO/" + blockHash;
 		if (new File(fileName).exists()) {
-			U.d(2, "we already have this block");
+			U.d(3, "INFO: we already have this block");
 			return false;
 		}
 		return true;
@@ -277,7 +277,7 @@ class B {
 
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
 
-						U.d(1, "add BLOCK:" + block);
+						U.d(2, "INFO: add BLOCK:" + block);
 
 						if (persistBlock) {
 							saveBlock(newBlockInfo, block);
@@ -290,29 +290,29 @@ class B {
 						}
 
 						if (persistBlockInfo && newBlockInfo.chainWork.compareTo(bestBlockchainInfo.chainWork) > 0) {
-							U.d(2, "new bestBlockchainInfo:" + newBlockInfo);
+							U.d(2, "INFO: new bestBlockchainInfo:" + newBlockInfo);
 							bestBlockchainInfo = newBlockInfo;
 						} else {
-							if (persistBlockInfo) U.d(1, "WARN: this new block is NOT to my best blockchain..");
+							if (persistBlockInfo) U.d(2, "WARN: this new block is NOT to my best blockchain..");
 						}
 
 						if (persistBlock && persistBlockInfo) {
 							N.toSend(from, U.serialize(block));
 						}
 					} else {
-						U.d(1, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
+						U.d(2, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
 						return false;
 					}
 				} else {
-					U.d(1, "WARN: INVALID BLOCK. No transactions.");
+					U.d(2, "WARN: INVALID BLOCK. No transactions.");
 					return false;
 				}
 			} else {
-				U.d(1, "WARN: INVALID BLOCK. Invalid PoW.");
+				U.d(2, "WARN: INVALID BLOCK. Invalid PoW.");
 				return false;
 			}
 		} else {
-			U.d(1, "WARN: Unknown 'last block' of this Block.");
+			U.d(2, "WARN: Unknown 'last block' of this Block.");
 			return false;
 		}
 		return true;
@@ -324,13 +324,21 @@ class B {
 	}
 
 	static boolean addTx2MemPool(final Transaction tx) {
-		U.d(2, "add mempool tx:" + tx);
-		if (mempool.contains(tx)) return false;
-		if (isValidTx(tx) != null) {
+		U.d(3, "INFO: try add tx to mempool:" + tx);
+		boolean success = false;
+
+		if (!mempool.contains(tx) && isValidTx(tx) != null) {
 			mempool.add(tx);
-			return true;
+			success = true;
 		}
-		return false;
+
+		if (success) {
+			U.d(3, "INFO: tx add to mempool SUCESS:" + tx);
+		} else {
+			U.d(3, "WARN: tx add to mempool FAILED:" + tx);
+		}
+
+		return success;
 	}
 
 	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException {

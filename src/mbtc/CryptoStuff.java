@@ -134,10 +134,10 @@ class C {
 	static void loadOrCreateKeyPair()
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException, IOException {
 		if (new File("KeyPair/private.key").exists()) {
-			U.d(3, "Loading keys");
+			U.d(3, "INFO: Loading keys");
 			Main.me = loadKeyPairFromFile();
 		} else {
-			U.d(3, "Generating keys");
+			U.d(3, "INFO: Generating keys");
 			Main.me = generateAndSaveKeyPair();
 		}
 	}
@@ -148,10 +148,6 @@ class C {
 
 	static BigInteger sign(final Transaction tx) throws InvalidKeyException, SignatureException, IOException {
 		return new BigInteger(C.sign(U.serialize(tx)));
-	}
-
-	static void sleep() throws InterruptedException {
-		Thread.sleep(2500);
 	}
 
 	static boolean verify(final PublicKey publicKey, final Transaction tx, final BigInteger signature)

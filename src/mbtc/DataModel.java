@@ -15,7 +15,8 @@ class Block extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Block=time:" + time + ";nonce:" + nonce + ";lastBlockHash:" + lastBlockHash + ";txs:" + txs;
+		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
+				+ ", txs:" + txs + "}}";
 	}
 }
 
@@ -30,7 +31,8 @@ class BlockchainInfo extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Info=height:" + height + ";chainWork:" + chainWork + ";target:" + target + ";blockHash:" + blockHash;
+		return "{\"info\":{\"height\":" + height + ", \"chainWork\":" + chainWork + ", \"target\":" + target
+				+ ", \"blockHash\":" + blockHash + "}}";
 	}
 }
 
@@ -47,8 +49,8 @@ class Input extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		final Output o = B.getOutput(this);
-		if (o != null) return o.toString();
-		else return "tx not found";
+		if (o != null) return "{input:" + o.toString() + "}";
+		else return "{\"input\":\"null\"}";
 	}
 }
 
@@ -89,7 +91,8 @@ class Output extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		try {
-			return Integer.toHexString(getPublicKey().hashCode()) + "=" + value;
+			return "{\"output\":{\"address\":" + Integer.toHexString(getPublicKey().hashCode()) + ", \"value\":" + value
+					+ "}}";
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new RuntimeException(e.getMessage());
 		}
@@ -109,15 +112,18 @@ class Transaction extends MyObject implements Serializable {
 	Transaction(final List<Input> inputs, final List<Output> outputs)
 			throws InvalidKeyException, SignatureException, IOException {
 		this.inputs = inputs;
+		if (outputs == null) throw new RuntimeException("Error: Missing outputs in create transaction");
 		this.outputs = outputs;
 		this.signature = C.sign(this);
 	}
 
 	@Override
 	public String toString() {
-		String s = "";
-		if (inputs != null) s += "IN:" + inputs.toString();
-		if (outputs != null) s += " | OUT:" + outputs.toString();
+		String s = "{\"tx\":";
+		if (inputs != null) {
+			s += "{\"inputs\":" + inputs + "},";
+		}
+		s += "{\"outputs\":" + outputs + "}}";
 		return s;
 	}
 }

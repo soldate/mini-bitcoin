@@ -39,22 +39,23 @@ class N {
 
 					// Am i trying to connect to myself?
 					if (server.getHostAddress().contains(myIp.getHostAddress())) {
-						U.d(1, "WARN: do NOT connect to yourself");
+						U.d(2, "WARN: do NOT connect to yourself");
 						continue;
 					}
 					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
 					socketChannel.configureBlocking(false);
 					p2pChannels.put(socketChannel, new Buffer());
-					U.d(1, "CLIENT: i am client of SERVER " + socketChannel.getRemoteAddress());
+					U.d(1, "NET: i am CLIENT: " + socketChannel.getLocalAddress() + " of SERVER "
+							+ socketChannel.getRemoteAddress());
 				} catch (final UnresolvedAddressException e) {
-					U.d(1, "WARN: can NOT connect to SERVER " + s);
+					U.d(2, "WARN: can NOT connect to SERVER " + s);
 				}
 			}
 		}
 	}
 
 	private static void disconnectDebug(final SocketChannel channel) throws IOException {
-		U.d(1, "channel is closed or blocking.. DISCONNECTING..");
+		U.d(1, "INFO: channel is closed or blocking.. DISCONNECTING..");
 		disconnect(channel);
 	}
 
@@ -72,15 +73,15 @@ class N {
 		if (inUse.buffer.remaining() > 0) {
 			final int qty = socketChannel.read(inUse.buffer);
 			if (qty <= 0) {
-				U.d(3, "nothing to be read");
+				U.d(3, "INFO: nothing to be read");
 			} else {
 				try {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
 					if (txOrBlock instanceof Block) {
-						U.d(2, "READ: we receive a BLOCK from " + socketChannel);
+						U.d(1, "NET: READ a BLOCK " + U.str(socketChannel));
 						read = B.addBlock((Block) txOrBlock, socketChannel);
 					} else if (txOrBlock instanceof Transaction) {
-						U.d(2, "READ: we receive a TRANSACTION from " + socketChannel);
+						U.d(2, "NET: READ a TRANSACTION " + U.str(socketChannel));
 						read = B.addTx2MemPool((Transaction) txOrBlock);
 					} else {
 						disconnect = true;
@@ -95,12 +96,12 @@ class N {
 				}
 			}
 		} else {
-			U.d(1, "Are we under DoS attack?");
+			U.d(1, "WARN: Are we under DoS attack? disconnecting " + U.str(socketChannel));
 			disconnect(socketChannel);
 		}
 
 		if (disconnect) {
-			U.d(1, "WARN: DISCONNECTING " + socketChannel);
+			U.d(1, "WARN: disconnecting " + U.str(socketChannel));
 			disconnect(socketChannel);
 		}
 
@@ -111,15 +112,15 @@ class N {
 		try {
 			// do NOT send back the same data you received
 			if (channel.equals(ToSend.dataFrom)) {
-				U.d(1, "WARN: do NOT send data back to origin");
+				U.d(3, "WARN: do NOT send data back to origin");
 				return;
 			}
 
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(ToSend.data));
-			U.d(2, "SEND: wrote " + qty + " bytes to " + channel);
+			U.d(2, "NET: WROTE " + qty + " bytes " + U.str(channel));
 		} catch (final IOException e) {
-			U.d(1, "Other side DISCONNECT.. closing channel..");
+			U.d(2, "NET: Other side DISCONNECT.. closing channel..");
 			disconnect(channel);
 		}
 	}
@@ -131,7 +132,7 @@ class N {
 			serverSC.configureBlocking(false);
 			serverSC.bind(new InetSocketAddress(K.PORT));
 		} catch (final BindException e) {
-			U.d(1, "ERROR: can NOT start a SERVER");
+			U.d(2, "ERROR: can NOT start a SERVER");
 			return null;
 		}
 		return serverSC;
@@ -149,7 +150,7 @@ class N {
 		final SocketChannel newChannel = serverSC != null ? serverSC.accept() : null;
 
 		if (newChannel == null) {
-			U.d(3, "...no new connection..handle the open channels..");
+			U.d(3, "INFO: ...no new connection..handle the open channels..");
 			// if i have nothing to send, read all channels
 			if (getDataToSend() == null) {
 				for (final SocketChannel channel : p2pChannels.keySet()) {
@@ -172,7 +173,7 @@ class N {
 			}
 			cleanDataToSend();
 		} else {
-			U.d(1, "SERVER: *** We have a NEW CLIENT!!! ***");
+			U.d(2, "NET: SERVER *** We have a NEW CLIENT!!! ***");
 			newChannel.configureBlocking(false);
 			p2pChannels.put(newChannel, new Buffer());
 		}

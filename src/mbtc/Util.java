@@ -3,6 +3,7 @@ package mbtc;
 import java.io.*;
 import java.math.*;
 import java.nio.*;
+import java.nio.channels.*;
 import java.security.*;
 import java.text.*;
 import java.util.*;
@@ -111,7 +112,7 @@ class U {
 	static void writeToFile(final String path, final byte[] data) throws IOException {
 
 		if (new File(path).exists()) {
-			U.d(1, "File already exists.. not saving");
+			U.d(2, "ERROR: File already exists.. not saving");
 			return;
 		}
 
@@ -122,6 +123,10 @@ class U {
 		fos.write(data);
 		fos.flush();
 		fos.close();
+	}
+
+	static String str(final SocketChannel channel) throws IOException {
+		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
 	}
 
 }

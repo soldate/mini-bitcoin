@@ -50,7 +50,7 @@ public class Main {
 	private static void mineALittleBit() throws IOException, InvalidKeyException, SignatureException,
 			InterruptedException, ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 		if (startMining) {
-			U.d(3, "mining...");
+			U.d(3, "INFO: mining...");
 			boolean iFoundIt = false;
 			final long l = U.getGoodRandom();
 			final Block candidate = B.createBlockCandidate();
@@ -70,7 +70,7 @@ public class Main {
 				candidate.nonce = i;
 				final BigInteger candidateHash = C.sha(candidate);
 				if (target.compareTo(candidateHash) > 0) {
-					U.d(1, "We mine a NEW BLOCK!");
+					U.d(1, "INFO: We mine a NEW BLOCK!");
 					iFoundIt = true;
 					break;
 				}
@@ -78,7 +78,7 @@ public class Main {
 
 			if (iFoundIt) {
 				B.addBlock(candidate, null);
-				if (K.DEBUG_MODE) U.sleep(3 * 1000); // wait 3s to increase chain split chance
+				if (K.DEBUG_MODE) U.sleep(); // wait to increase chain split chance
 			}
 		} else {
 			// take a breath
@@ -113,11 +113,11 @@ public class Main {
 		final long secondsFromLastAction = (now - N.lastAction) / 1000;
 
 		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing (or just mining)
-			U.d(3, "Should i do something?");
+			U.d(3, "INFO: Should i do something?");
 			// do something...
 			if (!startMining) {
 				startMining = true;
-				U.d(0, "Starting mining...");
+				U.w("Starting mining...");
 			}
 			N.lastAction = now;
 		}
@@ -161,11 +161,11 @@ public class Main {
 				String msg = "";
 				if (p != null && !isValidKey) msg = " Error: Address already in use. Please, delete KeyPair folder.";
 				else if (p == null) msg = " (not valid yet)";
-				U.d(0, "------ /balance ------");
+				U.w("------ /balance ------");
 				U.w("balance: " + balance);
 				U.w("address: " + addressStr + msg);
 				U.w("publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
-				U.d(0, "----------------------");
+				U.w("----------------------");
 				break;
 
 			case "/send":
@@ -179,9 +179,9 @@ public class Main {
 					address = Integer.parseInt(account[0], 16);
 					toPublicKey = B.bestBlockchainInfo.address2PublicKey.get(address);
 					if (toPublicKey == null || address % 9 != Integer.parseInt(account[1])) {
-						U.d(0, "------ /send ------");
-						U.d(0, "Error: Invalid Address");
-						U.d(0, "-------------------");
+						U.w("------ /send ------");
+						U.w("Error: Invalid Address");
+						U.w("-------------------");
 					}
 				} else if (addressStr.length() == 120) {
 					toPublicKey = C.getPublicKeyFromString(addressStr);
@@ -198,7 +198,7 @@ public class Main {
 					}
 					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs);
-					U.d(0, "SENT your tx: " + tx);
+					U.w("SENT your tx: " + tx);
 					N.toSend(null, U.serialize(tx));
 				}
 				break;
@@ -209,18 +209,18 @@ public class Main {
 
 			case "/mine":
 				startMining = !startMining;
-				U.d(0, "------ mining " + startMining + " ------");
+				U.w("------ mining " + startMining + " ------");
 				break;
 
 			case "/quit":
-				U.d(0, "------ Thanks! See you! ------");
+				U.w("------ Thanks! See you! ------");
 				System.exit(0);
 				break;
 
 			// log 0, 1, 2 or 3. 3=Very verbose
 			case "/log":
 				U.logVerbosityLevel = Integer.parseInt(args[1]);
-				U.d(0, "------ verbosity " + U.logVerbosityLevel + " ------");
+				U.w("------ verbosity " + U.logVerbosityLevel + " ------");
 				break;
 
 			case "/info":
@@ -228,32 +228,32 @@ public class Main {
 				break;
 
 			case "/mempool":
-				U.d(0, "------ /mempool ------");
+				U.w("------ /mempool ------");
 				for (final Transaction t : B.mempool) U.w(t);
-				U.d(0, "----------------------");
+				U.w("----------------------");
 				break;
 
 			case "/utxo":
-				U.d(0, "------ /utxo ------");
+				U.w("------ /utxo ------");
 				for (final Transaction t : B.bestBlockchainInfo.UTXO.values()) U.w(t);
-				U.d(0, "-------------------");
+				U.w("-------------------");
 				break;
 
 			case "/users":
-				U.d(0, "------ /users ------");
+				U.w("------ /users ------");
 				for (final Integer u : B.bestBlockchainInfo.address2PublicKey.keySet())
 					U.w(Integer.toHexString(u) + "-" + (u % 9));
-				U.d(0, "--------------------");
+				U.w("--------------------");
 				break;
 
 			}
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
 				| SignatureException | NumberFormatException e) {
-			U.d(1, "****** COMMAND ERROR ******");
+			U.w("****** COMMAND ERROR ******");
 			U.exceptions_count++;
-			U.d(1, "Exceptions count: " + U.exceptions_count);
-			U.d(1, e.getMessage());
-			U.d(1, "***************************");
+			U.d(2, "ERROR: Exceptions count: " + U.exceptions_count);
+			U.w("ERROR: " + e.getMessage());
+			U.w("***************************");
 		}
 	}
 }
