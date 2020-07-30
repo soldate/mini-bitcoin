@@ -34,6 +34,8 @@ Uncomment an put a breakpoint in the first line
 * K.SEEDS[0] = "localhost";
 ```
 
+Run and go to http://localhost:8080/
+
 Go debugging. :-)
 
 No threadssss, just ONE execution line.
