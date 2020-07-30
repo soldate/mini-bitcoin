@@ -43,14 +43,27 @@ Start two nodes to check how the peers exchange messages.
 
 WARNING: 
 * Clean Blockchain/KeyPair/UTXO folders before build.
-* Comment this line in Main.java
+* UNCOMMENT this line in Main.java
+
+``` 
+ K.SEEDS[0] = "localhost";
+```
+
+You can run just one docker(peer) and then run in Eclipse another peer to easily debug.
+
+```
+docker build -t mbtc .
+docker run -it -p 10762:10762 --rm mbtc
+```
+Or use docker-compose to run two peers
+
+WARNING:
+* Clean Blockchain/KeyPair/UTXO folders before build. 
+* COMMENT this line in Main.java
 
 ``` 
 // K.SEEDS[0] = "localhost";
-```
-Then
 
-```
 $ docker-compose build
 $ docker-compose up
 ```
