@@ -17,8 +17,6 @@ Fork this. Create your own cryptocurrency!
 [Bitcoin White Paper](https://bitcoin.org/bitcoin.pdf)
 
 ## How to GO
-* Install Java Runtime Environment
-
 * Download [Eclipse IDE](https://www.eclipse.org/downloads/)
 
 * Clone or fork this repository.
@@ -28,15 +26,15 @@ Fork this. Create your own cryptocurrency!
 ## Understanding the code
 Inside mbtc.Main you get the "main method" starting point.
 
-Uncomment an put a breakpoint in the first line 
+Run and go to http://localhost:8080/
+
+You can try put a breakpoint in the first line 
 
 ```
 * K.SEEDS[0] = "localhost";
 ```
 
-Run and go to http://localhost:8080/
-
-Go debugging. :-)
+and go debugging too. :-)
 
 No threadssss, just ONE execution line.
 
