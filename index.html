@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#val {
+  width: 40px;
+}
+#toAddress {
+  width: 400px;
+}
+#msg {
+  width: 400px;
+}
+</style>
+</head>
+<body>
+<h1>*** Welcome to Mini-Bitcoin (MBTC)! ***</h1>
+<b>== Your Wallet ==</b>
+<br/>
+<i>Balance: </i>#balance<br/>
+<i>Address: </i>#address<br/>
+<i>PublicKey: </i>#publickey<br/>
+<br/>
+/send qtd addressOrPublicKey message(optional)<br/>
+ex: /send 1 1234-5<br/>
+ex: /send 2 4567-8 store XYZ order 9001<br/>
+ex: /send 5 MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEdMkLaDHJ0H2EOBFbG2wH3IoHRrt0AsDtHZFqWAKIady256bANHhNy2An3RR1yY4aMAXY9cAn8j05OmQpDy8DRA==<br/> 
+<br/>
+/send <input type="text" id="val" name="val"> <input type="text" id="toAddress" name="toAddress"> <input type="text" id="msg" name="msg"> <button onclick="send()">send</button> 
+<br/>
+<br/>
+<b>== Blockchain data ==</b>
+<br/>
+<a href="http://localhost:8080/blocks">/blocks</a><br/>
+<a href="http://localhost:8080/info">/info</a><br/>
+<a href="http://localhost:8080/users">/users</a><br/>
+ex: /block 000000000001_1.block<br/>
+/block <input type="text" id="block" name="block"> <button onclick="block()">see block</button><br/>
+<br/>
+<b>== Admin ==</b>
+<br/>
+<a href="http://localhost:8080/utxo">/utxo</a><br/>
+<a href="http://localhost:8080/mempool">/mempool</a><br/>
+<br/>
+<script>
+function send() {
+	window.location.href = "http://localhost:8080/send " + document.getElementById("val").value + " " + document.getElementById("toAddress").value + " " + document.getElementById("msg").value;
+}
+function block() {
+	window.location.href = "http://localhost:8080/block " + document.getElementById("block").value;
+}
+</script>
+</body>
+</html>

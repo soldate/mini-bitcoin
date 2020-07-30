@@ -16,7 +16,7 @@ class Block extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
-				+ ", txs:" + txs + "}}";
+				+ ", \"txs\":" + txs + "}}";
 	}
 }
 
@@ -49,7 +49,7 @@ class Input extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		final Output o = B.getOutput(this);
-		if (o != null) return "{input:" + o.toString() + "}";
+		if (o != null) return "{\"input\":" + o.toString() + "}";
 		else return "{\"input\":\"null\"}";
 	}
 }
@@ -91,8 +91,8 @@ class Output extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		try {
-			return "{\"output\":{\"address\":" + Integer.toHexString(getPublicKey().hashCode()) + ", \"value\":" + value
-					+ "}}";
+			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey().hashCode()) + "\", \"value\":"
+					+ value + "}}";
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new RuntimeException(e.getMessage());
 		}
@@ -107,23 +107,27 @@ class Transaction extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	List<Input> inputs;
 	List<Output> outputs;
+	String message;
 	BigInteger signature;
 
-	Transaction(final List<Input> inputs, final List<Output> outputs)
+	Transaction(final List<Input> inputs, final List<Output> outputs, final String message)
 			throws InvalidKeyException, SignatureException, IOException {
 		this.inputs = inputs;
 		if (outputs == null) throw new RuntimeException("Error: Missing outputs in create transaction");
 		this.outputs = outputs;
+		this.message = message;
 		this.signature = C.sign(this);
 	}
 
 	@Override
 	public String toString() {
-		String s = "{\"tx\":";
+		String s = "{\"tx\":{";
 		if (inputs != null) {
-			s += "{\"inputs\":" + inputs + "},";
+			s += "\"inputs\":" + inputs + ",";
 		}
-		s += "{\"outputs\":" + outputs + "}}";
+		s += "\"outputs\":" + outputs + ",";
+		s += "\"message\":\"" + (message == null ? "" : message) + "\",";
+		s += "\"signature\":" + signature + "}}";
 		return s;
 	}
 }

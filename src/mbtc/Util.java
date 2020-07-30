@@ -4,6 +4,7 @@ import java.io.*;
 import java.math.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.nio.file.*;
 import java.security.*;
 import java.text.*;
 import java.util.*;
@@ -15,7 +16,6 @@ class U {
 	static final SecureRandom random = new SecureRandom();
 	static SimpleDateFormat simpleDateFormat;
 	static BigInteger MAX_BIG = BigInteger.ONE.shiftLeft(255);
-	static int exceptions_count = 0;
 
 	static {
 		simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -86,6 +86,11 @@ class U {
 		return false;
 	}
 
+	static String loadStringFromFile() throws IOException {
+		final Path fileName = Path.of("index.html");
+		return Files.readString(fileName);
+	}
+
 	static BigInteger publicKey2BigInteger(final PublicKey publicKey) {
 		return new BigInteger(publicKey.getEncoded());
 	}
@@ -97,12 +102,16 @@ class U {
 		return out.toByteArray();
 	}
 
+	static void sleep() throws InterruptedException {
+		sleep(2500);
+	}
+
 	static void sleep(final long millis) throws InterruptedException {
 		Thread.sleep(millis);
 	}
 
-	static void sleep() throws InterruptedException {
-		sleep(2500);
+	static String str(final SocketChannel channel) throws IOException {
+		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
 	}
 
 	static void w(final Object o) {
@@ -123,10 +132,6 @@ class U {
 		fos.write(data);
 		fos.flush();
 		fos.close();
-	}
-
-	static String str(final SocketChannel channel) throws IOException {
-		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
 	}
 
 }

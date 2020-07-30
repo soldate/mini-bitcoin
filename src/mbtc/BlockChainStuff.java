@@ -65,7 +65,7 @@ class B {
 			throws InvalidKeyException, SignatureException, IOException {
 		final List<Output> outputs = new ArrayList<Output>();
 		outputs.add(myOutputReward());
-		candidate.txs.add(new Transaction(null, outputs));
+		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
 	}
 
 	private static BlockchainInfo getBlockchainInfo(final BigInteger lastBlockHash)
@@ -251,11 +251,6 @@ class B {
 		}
 	}
 
-	static boolean addBlock(final Block block, final SocketChannel from) throws InvalidKeyException, SignatureException,
-			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		return addBlock(block, true, true, from);
-	}
-
 	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistBlockInfo,
 			final SocketChannel from) throws InvalidKeyException, SignatureException, IOException,
 			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -316,6 +311,11 @@ class B {
 			return false;
 		}
 		return true;
+	}
+
+	static boolean addBlock(final Block block, final SocketChannel from) throws InvalidKeyException, SignatureException,
+			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+		return addBlock(block, true, true, from);
 	}
 
 	static boolean addBlockInfo(final Block block) throws InvalidKeyException, SignatureException,

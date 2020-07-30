@@ -2,9 +2,11 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
+import java.net.*;
 import java.security.*;
 import java.security.spec.*;
-import java.util.*;
+
+import com.sun.net.httpserver.*;
 
 //-------------------------------------------------
 // How does Bitcoin work? https://learnmeabitcoin.com/
@@ -23,7 +25,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			// K.SEEDS[0] = "localhost"; // uncomment for local test. comment for docker-compose test
+			K.SEEDS[0] = "localhost"; // uncomment for local test. comment for docker-compose test
 
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
@@ -36,6 +38,8 @@ public class Main {
 			N.configAsyncP2P();
 
 			showMenuOptions();
+
+			startHttpServer();
 
 			// "while(true)" inside
 			runForever();
@@ -127,89 +131,33 @@ public class Main {
 		U.w("-------------------------------------");
 		U.w("** Welcome to Mini-Bitcoin (MBTC)! **");
 		U.w("-------------------------------------");
+		U.w("Go to http://localhost:8080");
 		U.w("Your wallet will be created or loaded if already exists.");
 		U.w("Now you will be connected to mbtc network and start to sync the blocks.");
 		U.w("If everything ok, you will start mining.");
 		U.w("Here is your command list:");
 		U.w("--------------- MENU ----------------");
 		U.w("/menu - Show this.");
-		U.w("/balance - Show your balance and more.");
-		U.w("/info - Show your blockchain status.");
-		U.w("/send qty address - Send some mbtc to somebody.");
-		U.w("/mine - On/Off your miner.");
-		U.w("/log number - On/Off log (number = 1, 2 or 3).");
+		U.w("/log number - log (0, 1, 2 or 3. very verbose).");
 		U.w("/quit - Exit. :-(");
-		U.w("ADMIN: /mempool /utxo /users");
 		U.w("-------------------------------------");
+	}
+
+	private static void startHttpServer() throws IOException {
+		final HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+		final HttpContext context = server.createContext("/");
+		context.setHandler(HttpHandler::handleRequest);
+		server.start();
 	}
 
 	private static void userCommandHandler(final String readLine) {
 		try {
 			final String args[] = readLine.split(" ");
 
-			// 'balance' and 'send' commands need this info below (4 lines). So.. do it always, no matter the command.
-			final List<Input> allMyMoney = B.getMoney(me.getPublic());
-			final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
-			int address = me.getPublic().hashCode();
-			String addressStr = Integer.toHexString(address) + "-" + (address % 9);
-
 			switch (args[0]) {
-
-			case "/balance":
-				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
-				final boolean isValidKey = (p != null) ? p.equals(me.getPublic()) : false;
-				String msg = "";
-				if (p != null && !isValidKey) msg = " Error: Address already in use. Please, delete KeyPair folder.";
-				else if (p == null) msg = " (not valid yet)";
-				U.w("------ /balance ------");
-				U.w("balance: " + balance);
-				U.w("address: " + addressStr + msg);
-				U.w("publicKey: " + Base64.getEncoder().encodeToString(me.getPublic().getEncoded()));
-				U.w("----------------------");
-				break;
-
-			case "/send":
-				final Long qty = Long.parseLong(args[1]);
-				addressStr = args[2];
-				PublicKey toPublicKey = null;
-
-				// if address (or !publicKey) then validate verifying digit (%9)
-				if (addressStr.contains("-") && addressStr.length() <= 8) {
-					final String[] account = addressStr.split("-");
-					address = Integer.parseInt(account[0], 16);
-					toPublicKey = B.bestBlockchainInfo.address2PublicKey.get(address);
-					if (toPublicKey == null || address % 9 != Integer.parseInt(account[1])) {
-						U.w("------ /send ------");
-						U.w("Error: Invalid Address");
-						U.w("-------------------");
-					}
-				} else if (addressStr.length() == 120) {
-					toPublicKey = C.getPublicKeyFromString(addressStr);
-				}
-
-				if (balance >= qty) {
-					// create output
-					final List<Output> outputs = new ArrayList<Output>();
-					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey), qty));
-					// create your change
-					if (balance > qty) {
-						final Long change = balance - qty;
-						outputs.add(new Output(U.int2BigInt(me.getPublic().hashCode()), change));
-					}
-					// always put all of your money (all possible inputs) to reduce UTXO size
-					final Transaction tx = new Transaction(allMyMoney, outputs);
-					U.w("SENT your tx: " + tx);
-					N.toSend(null, U.serialize(tx));
-				}
-				break;
 
 			case "/menu":
 				showMenuOptions();
-				break;
-
-			case "/mine":
-				startMining = !startMining;
-				U.w("------ mining " + startMining + " ------");
 				break;
 
 			case "/quit":
@@ -223,35 +171,9 @@ public class Main {
 				U.w("------ verbosity " + U.logVerbosityLevel + " ------");
 				break;
 
-			case "/info":
-				U.w(B.bestBlockchainInfo);
-				break;
-
-			case "/mempool":
-				U.w("------ /mempool ------");
-				for (final Transaction t : B.mempool) U.w(t);
-				U.w("----------------------");
-				break;
-
-			case "/utxo":
-				U.w("------ /utxo ------");
-				for (final Transaction t : B.bestBlockchainInfo.UTXO.values()) U.w(t);
-				U.w("-------------------");
-				break;
-
-			case "/users":
-				U.w("------ /users ------");
-				for (final Integer u : B.bestBlockchainInfo.address2PublicKey.keySet())
-					U.w(Integer.toHexString(u) + "-" + (u % 9));
-				U.w("--------------------");
-				break;
-
 			}
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
-				| SignatureException | NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			U.w("****** COMMAND ERROR ******");
-			U.exceptions_count++;
-			U.d(2, "ERROR: Exceptions count: " + U.exceptions_count);
 			U.w("ERROR: " + e.getMessage());
 			U.w("***************************");
 		}

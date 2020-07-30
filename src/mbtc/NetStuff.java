@@ -54,14 +54,14 @@ class N {
 		}
 	}
 
-	private static void disconnectDebug(final SocketChannel channel) throws IOException {
-		U.d(1, "INFO: channel is closed or blocking.. DISCONNECTING..");
-		disconnect(channel);
-	}
-
 	private static void disconnect(final SocketChannel channel) throws IOException {
 		p2pChannels.remove(channel);
 		channel.close();
+	}
+
+	private static void disconnectDebug(final SocketChannel channel) throws IOException {
+		U.d(1, "INFO: channel is closed or blocking.. DISCONNECTING..");
+		disconnect(channel);
 	}
 
 	private static boolean readData(final SocketChannel socketChannel) throws IOException {
@@ -89,7 +89,6 @@ class N {
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
 						| InvalidKeySpecException | NoSuchAlgorithmException e) {
 					e.printStackTrace();
-					U.exceptions_count++;
 					disconnect = true;
 				} finally {
 					inUse.buffer.clear();
@@ -138,9 +137,17 @@ class N {
 		return serverSC;
 	}
 
+	static byte[] cleanDataToSend() {
+		return ToSend.data = null;
+	}
+
 	static void configAsyncP2P() throws IOException {
 		serverSC = serverConfig();
 		clientConfigAndConnect();
+	}
+
+	static byte[] getDataToSend() {
+		return ToSend.data;
 	}
 
 	// should i connect, read or send any network messages?
@@ -182,13 +189,5 @@ class N {
 	static void toSend(final SocketChannel from, final byte[] data) {
 		ToSend.dataFrom = from;
 		ToSend.data = data;
-	}
-
-	static byte[] getDataToSend() {
-		return ToSend.data;
-	}
-
-	static byte[] cleanDataToSend() {
-		return ToSend.data = null;
 	}
 }

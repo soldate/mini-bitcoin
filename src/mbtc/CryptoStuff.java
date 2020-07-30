@@ -114,6 +114,7 @@ class C {
 		if (U.isInteger32bits(addressOrPublicKey)) {
 			final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(addressOrPublicKey.intValue());
 			if (p != null) return p;
+			else new RuntimeException("ERROR: invalid address " + addressOrPublicKey);
 		}
 		return getPublicKeyFromBytes(addressOrPublicKey.toByteArray());
 	}

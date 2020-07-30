@@ -2,7 +2,9 @@
 > Minimal Bitcoin Protocol in Java (Satoshi White Paper, not Bitcoin Core)
 
 ## Description
-Just small 7 files. Standard Java Library. No JARs.
+Just small 8 files. Standard Java Library. No JARs.
+
+Wallet(Private and Public keys), Blockchain, Miner, P2P (Server and client), RPC(http).. all ready.
 
 Our goal is to decentralize the power of creating currencies. 
 
@@ -35,8 +37,6 @@ Uncomment an put a breakpoint in the first line
 Go debugging. :-)
 
 No threadssss, just ONE execution line.
-
-RPC not ready yet.
 
 ## Docker
 Start two nodes to check how the peers exchange messages. 
