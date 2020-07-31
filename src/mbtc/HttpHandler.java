@@ -82,7 +82,7 @@ class HttpHandler {
 				if (balance >= qty) {
 					// create output
 					final List<Output> outputs = new ArrayList<Output>();
-					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey), qty));
+					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey, B.bestBlockchainInfo), qty));
 					// create your change
 					if (balance > qty) {
 						final Long change = balance - qty;

@@ -28,13 +28,13 @@ class B {
 		saveBlockchainInfo(bestBlockchainInfo);
 	}
 
-	private static void addressMapUpdate(final Map<Integer, PublicKey> address2PublicKey, final Block block)
+	private static void addressMapUpdate(final BlockchainInfo newBlockInfo, final Block block)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		for (final Transaction tx : block.txs) {
 			for (final Output out : tx.outputs) {
-				final PublicKey publickey = out.getPublicKey();
-				if (!address2PublicKey.containsKey(publickey.hashCode())) {
-					address2PublicKey.put(publickey.hashCode(), publickey);
+				final PublicKey publickey = out.getPublicKey(newBlockInfo);
+				if (!newBlockInfo.address2PublicKey.containsKey(publickey.hashCode())) {
+					newBlockInfo.address2PublicKey.put(publickey.hashCode(), publickey);
 				}
 			}
 		}
@@ -51,7 +51,7 @@ class B {
 				if (out == null) return false;
 				signature = tx.signature;
 				tx.signature = null;
-				if (!C.verify(out.getPublicKey(), tx, signature)) {
+				if (!C.verify(out.getPublicKey(chainInfo), tx, signature)) {
 					return false;
 				}
 				tx.signature = signature;
@@ -98,11 +98,6 @@ class B {
 			}
 		}
 		return txs;
-	}
-
-	private static Output getOutput(final Input input, final BlockchainInfo chain) {
-		final Transaction tx = chain.UTXO.get(input.txHash);
-		return tx.outputs.get(input.outputIndex);
 	}
 
 	// return null = return false
@@ -156,7 +151,7 @@ class B {
 		}
 
 		utxoUpdate(newBlockInfo.UTXO, block);
-		addressMapUpdate(newBlockInfo.address2PublicKey, block);
+		addressMapUpdate(newBlockInfo, block);
 
 		return newBlockInfo;
 	}
@@ -258,6 +253,7 @@ class B {
 		final BlockchainInfo chainInfo = getBlockchainInfo(block.lastBlockHash);
 
 		if (chainInfo != null) {
+			U.d(2, "INFO: add BLOCK:" + block);
 			final BigInteger blockHash = C.sha(block);
 
 			// if the work was done, check transactions
@@ -271,8 +267,6 @@ class B {
 					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
 
 						final BlockchainInfo newBlockInfo = newBlockchainInfo(block, chainInfo);
-
-						U.d(2, "INFO: add BLOCK:" + block);
 
 						if (persistBlock) {
 							saveBlock(newBlockInfo, block);
@@ -371,7 +365,7 @@ class B {
 			txHash = entry.getKey();
 			tx = entry.getValue();
 			for (int i = 0; i < tx.outputs.size(); i++) {
-				if (tx.outputs.get(i) != null && tx.outputs.get(i).getPublicKey().equals(publicKey)) {
+				if (tx.outputs.get(i) != null && tx.outputs.get(i).getPublicKey(bestBlockchainInfo).equals(publicKey)) {
 					if (inputs == null) inputs = new ArrayList<Input>();
 					final Input input = new Input(txHash, i);
 					inputs.add(input);
@@ -383,6 +377,11 @@ class B {
 
 	static Output getOutput(final Input input) {
 		return getOutput(input, bestBlockchainInfo);
+	}
+
+	static Output getOutput(final Input input, final BlockchainInfo chain) {
+		final Transaction tx = chain.UTXO.get(input.txHash);
+		return tx.outputs.get(input.outputIndex);
 	}
 
 	// not used..

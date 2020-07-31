@@ -2,6 +2,7 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
+import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
@@ -15,8 +16,22 @@ class Block extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
+		try {
+			final byte[] array = Files.readAllBytes(Paths.get("UTXO/" + lastBlockHash));
+			final Object o = U.deserialize(array);
+			final BlockchainInfo chain = (BlockchainInfo) o;
+			return toString(chain);
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Error: Block toString " + lastBlockHash);
+		}
+	}
+
+	@Override
+	public String toString(final BlockchainInfo chain) {
+		final String s = U.listToString(txs, chain);
 		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
-				+ ", \"txs\":" + txs + "}}";
+				+ ", \"txs\":" + s + "}}";
 	}
 }
 
@@ -34,6 +49,11 @@ class BlockchainInfo extends MyObject implements Serializable {
 		return "{\"info\":{\"height\":" + height + ", \"chainWork\":" + chainWork + ", \"target\":" + target
 				+ ", \"blockHash\":" + blockHash + "}}";
 	}
+
+	@Override
+	public String toString(final BlockchainInfo chain) {
+		return toString();
+	}
 }
 
 class Input extends MyObject implements Serializable {
@@ -48,13 +68,18 @@ class Input extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		final Output o = B.getOutput(this);
-		if (o != null) return "{\"input\":" + o.toString() + "}";
+		throw new RuntimeException("Error: Input toString NO BlockchainInfo");
+	}
+
+	@Override
+	public String toString(final BlockchainInfo chain) {
+		final Output o = B.getOutput(this, chain);
+		if (o != null) return "{\"input\":" + o.toString(chain) + "}";
 		else return "{\"input\":\"null\"}";
 	}
 }
 
-class MyObject {
+abstract class MyObject {
 	@Override
 	public boolean equals(final Object that) {
 		if (that == null) return false;
@@ -76,6 +101,8 @@ class MyObject {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
+
+	public abstract String toString(BlockchainInfo chain);
 }
 
 class Output extends MyObject implements Serializable {
@@ -90,16 +117,21 @@ class Output extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
+		throw new RuntimeException("Error: Output toString NO BlockchainInfo");
+	}
+
+	@Override
+	public String toString(final BlockchainInfo chain) {
 		try {
-			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey().hashCode()) + "\", \"value\":"
-					+ value + "}}";
+			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey(chain).hashCode())
+					+ "\", \"value\":" + value + "}}";
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}
 
-	PublicKey getPublicKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
-		return C.getPublicKey(addressOrPublicKey);
+	PublicKey getPublicKey(final BlockchainInfo chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return C.getPublicKey(addressOrPublicKey, chain);
 	}
 }
 
@@ -121,11 +153,23 @@ class Transaction extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
+		try {
+			return toString(B.bestBlockchainInfo);
+		} catch (final Exception e) {
+			U.d(2, e.getMessage());
+			return "{}";
+		}
+	}
+
+	@Override
+	public String toString(final BlockchainInfo chain) {
+		final String strInputs = U.listToString(inputs, chain);
+		final String strOutputs = U.listToString(outputs, chain);
 		String s = "{\"tx\":{";
 		if (inputs != null) {
-			s += "\"inputs\":" + inputs + ",";
+			s += "\"inputs\":" + strInputs + ",";
 		}
-		s += "\"outputs\":" + outputs + ",";
+		s += "\"outputs\":" + strOutputs + ",";
 		s += "\"message\":\"" + (message == null ? "" : message) + "\",";
 		s += "\"signature\":" + signature + "}}";
 		return s;

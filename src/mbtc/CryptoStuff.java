@@ -42,7 +42,7 @@ class C {
 	private static PublicKey getPublicKey(final byte[] keyBytes)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		final BigInteger address = new BigInteger(1, keyBytes);
-		return getPublicKey(address);
+		return getPublicKey(address, B.bestBlockchainInfo);
 	}
 
 	private static PublicKey getPublicKeyFromFile(final String filename)
@@ -100,19 +100,19 @@ class C {
 		return keypair;
 	}
 
-	static BigInteger getAddressOrPublicKey(final PublicKey publicKey) {
+	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final BlockchainInfo chain) {
 		final int address = publicKey.hashCode();
-		if (B.bestBlockchainInfo.address2PublicKey.get(address) != null) {
+		if (chain.address2PublicKey.get(address) != null) {
 			return U.int2BigInt(address);
 		} else {
 			return U.publicKey2BigInteger(publicKey);
 		}
 	}
 
-	static PublicKey getPublicKey(final BigInteger addressOrPublicKey)
+	static PublicKey getPublicKey(final BigInteger addressOrPublicKey, final BlockchainInfo chain)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		if (U.isInteger32bits(addressOrPublicKey)) {
-			final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(addressOrPublicKey.intValue());
+			final PublicKey p = chain.address2PublicKey.get(addressOrPublicKey.intValue());
 			if (p != null) return p;
 			else new RuntimeException("ERROR: invalid address " + addressOrPublicKey);
 		}

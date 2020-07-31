@@ -114,6 +114,17 @@ class U {
 		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
 	}
 
+	static <T extends MyObject> String listToString(final List<T> list, final BlockchainInfo chain) {
+		if (list == null) return null;
+		String s = "[";
+		for (final MyObject o : list) {
+			s += o.toString(chain) + ", ";
+		}
+		s = s.substring(0, s.length() - 2);
+		s += "]";
+		return s;
+	}
+
 	static void w(final Object o) {
 		System.out.println(o.toString());
 	}
@@ -133,5 +144,4 @@ class U {
 		fos.flush();
 		fos.close();
 	}
-
 }
