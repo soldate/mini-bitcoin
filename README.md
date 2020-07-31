@@ -6,7 +6,7 @@ Just small 8 files. Standard Java Library. No JARs.
 
 Wallet(Private and Public keys), Blockchain, Miner, P2P (Server and client), RPC(http).. all ready.
 
-Our goal is to decentralize the power of creating currencies. 
+Our goal is to decentralize the power of create currencies. 
 
 There are about 10 million of Java programmers around the world.
 
