@@ -33,7 +33,7 @@ class C {
 
 	private static PrivateKey getPrivateKeyFromFile(final String filename)
 			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-		final byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
+		final byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
 		final PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
 		final KeyFactory kf = KeyFactory.getInstance(K.ALGO);
 		return kf.generatePrivate(spec);
@@ -42,12 +42,12 @@ class C {
 	private static PublicKey getPublicKey(final byte[] keyBytes)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		final BigInteger address = new BigInteger(1, keyBytes);
-		return getPublicKey(address, B.bestBlockchainInfo);
+		return getPublicKey(address, B.bestChain);
 	}
 
 	private static PublicKey getPublicKeyFromFile(final String filename)
 			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-		final byte[] keyBytes = Files.readAllBytes(new File(filename).toPath());
+		final byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
 		return getPublicKeyFromBytes(keyBytes);
 	}
 
@@ -90,7 +90,7 @@ class C {
 			}
 
 			// if address already exists.. generate a new keypair
-			if (B.bestBlockchainInfo.address2PublicKey.containsKey(publicKey.hashCode())) {
+			if (B.bestChain.address2PublicKey.containsKey(publicKey.hashCode())) {
 				publicKeyString = null;
 				continue;
 			}
@@ -100,7 +100,7 @@ class C {
 		return keypair;
 	}
 
-	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final BlockchainInfo chain) {
+	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final ChainInfo chain) {
 		final int address = publicKey.hashCode();
 		if (chain.address2PublicKey.get(address) != null) {
 			return U.int2BigInt(address);
@@ -109,7 +109,7 @@ class C {
 		}
 	}
 
-	static PublicKey getPublicKey(final BigInteger addressOrPublicKey, final BlockchainInfo chain)
+	static PublicKey getPublicKey(final BigInteger addressOrPublicKey, final ChainInfo chain)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		if (U.isInteger32bits(addressOrPublicKey)) {
 			final PublicKey p = chain.address2PublicKey.get(addressOrPublicKey.intValue());

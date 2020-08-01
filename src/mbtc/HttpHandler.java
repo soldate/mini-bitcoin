@@ -3,7 +3,6 @@ package mbtc;
 import java.io.*;
 import java.math.*;
 import java.nio.charset.*;
-import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
@@ -36,7 +35,7 @@ class HttpHandler {
 			switch (cmd[0]) {
 			case "/":
 				page = U.loadStringFromFile();
-				final PublicKey p = B.bestBlockchainInfo.address2PublicKey.get(address);
+				final PublicKey p = B.bestChain.address2PublicKey.get(address);
 				final boolean isValidKey = (p != null) ? p.equals(Main.me.getPublic()) : false;
 
 				String msg = "";
@@ -70,7 +69,7 @@ class HttpHandler {
 				if (addressStr.contains("-") && addressStr.length() <= 8) {
 					final String[] account = addressStr.split("-");
 					toAddress = Integer.parseInt(account[0], 16);
-					toPublicKey = B.bestBlockchainInfo.address2PublicKey.get(toAddress);
+					toPublicKey = B.bestChain.address2PublicKey.get(toAddress);
 					if (toPublicKey == null || toAddress % 9 != Integer.parseInt(account[1])) {
 						response = "{\"error\":\"Invalid Address\"}";
 						break;
@@ -82,7 +81,7 @@ class HttpHandler {
 				if (balance >= qty) {
 					// create output
 					final List<Output> outputs = new ArrayList<Output>();
-					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey, B.bestBlockchainInfo), qty));
+					outputs.add(new Output(C.getAddressOrPublicKey(toPublicKey, B.bestChain), qty));
 					// create your change
 					if (balance > qty) {
 						final Long change = balance - qty;
@@ -99,9 +98,7 @@ class HttpHandler {
 				setJsonResponse(exchange);
 				fileName = "Blockchain/" + cmd[1];
 				if (new File(fileName).exists()) {
-					final byte[] array = Files.readAllBytes(Paths.get(fileName));
-					final Object o = U.deserialize(array);
-					final Block block = (Block) o;
+					final Block block = U.loadBlockFromFile(fileName);
 					response = block.toString();
 				}
 				break;
@@ -128,7 +125,7 @@ class HttpHandler {
 
 			case "/info":
 				setJsonResponse(exchange);
-				response = B.bestBlockchainInfo.toString();
+				response = B.bestChain.toString();
 				break;
 
 			case "/mempool":
@@ -141,7 +138,7 @@ class HttpHandler {
 				Transaction tx = null;
 				BigInteger txHash = null;
 				response = "{\"utxo\":[";
-				for (final Map.Entry<BigInteger, Transaction> entry : B.bestBlockchainInfo.UTXO.entrySet()) {
+				for (final Map.Entry<BigInteger, Transaction> entry : B.bestChain.UTXO.entrySet()) {
 					txHash = entry.getKey();
 					tx = entry.getValue();
 					response += "{\"" + txHash + "\":" + tx + "}, ";
@@ -151,7 +148,7 @@ class HttpHandler {
 
 			case "/users":
 				setJsonResponse(exchange);
-				response = B.bestBlockchainInfo.address2PublicKey.keySet().toString();
+				response = B.bestChain.address2PublicKey.keySet().toString();
 				break;
 
 			default:

@@ -76,13 +76,20 @@ class N {
 				U.d(3, "INFO: nothing to be read");
 			} else {
 				try {
-					final Object txOrBlock = U.deserialize(inUse.buffer.array()); // objBytes
+					final Object txOrBlock = U.deserialize(inUse.buffer.array());
 					if (txOrBlock instanceof Block) {
 						U.d(1, "NET: READ a BLOCK " + U.str(socketChannel));
-						read = B.addBlock((Block) txOrBlock, socketChannel);
+						final Block b = (Block) txOrBlock;
+						read = B.addBlock(b, socketChannel);
+						// if he sent block 1 to you, send block 2 to him (downloading blocks)
+						final Block next = b.next();
+						if (next != null) socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+
 					} else if (txOrBlock instanceof Transaction) {
 						U.d(2, "NET: READ a TRANSACTION " + U.str(socketChannel));
 						read = B.addTx2MemPool((Transaction) txOrBlock);
+						if (read) N.toSend(socketChannel, U.serialize(txOrBlock));
+
 					} else {
 						disconnect = true;
 					}

@@ -58,7 +58,7 @@ public class Main {
 			boolean iFoundIt = false;
 			final long l = U.getGoodRandom();
 			final Block candidate = B.createBlockCandidate();
-			final BigInteger target = B.bestBlockchainInfo.target;
+			final BigInteger target = B.bestChain.target;
 
 			/*
 			 * -- debug tips --

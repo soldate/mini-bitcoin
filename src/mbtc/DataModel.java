@@ -17,10 +17,7 @@ class Block extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		try {
-			final byte[] array = Files.readAllBytes(Paths.get("UTXO/" + lastBlockHash));
-			final Object o = U.deserialize(array);
-			final BlockchainInfo chain = (BlockchainInfo) o;
-			return toString(chain);
+			return toString(getChainInfoBefore());
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Error: Block toString " + lastBlockHash);
@@ -28,14 +25,57 @@ class Block extends MyObject implements Serializable {
 	}
 
 	@Override
-	public String toString(final BlockchainInfo chain) {
+	public String toString(final ChainInfo chain) {
+		if (chain == null) return "{}";
 		final String s = U.listToString(txs, chain);
 		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
 				+ ", \"txs\":" + s + "}}";
 	}
+
+	ChainInfo getChainInfoAfter() throws ClassNotFoundException, IOException {
+		ChainInfo chain = null;
+		try {
+			chain = U.loadChainInfoFromFile("UTXO/" + C.sha(this));
+		} catch (final NoSuchFileException e) {
+		}
+		return chain;
+	}
+
+	ChainInfo getChainInfoBefore() throws ClassNotFoundException, IOException {
+		if (lastBlockHash == null) return null;
+		final ChainInfo chain = U.loadChainInfoFromFile("UTXO/" + lastBlockHash);
+		return chain;
+	}
+
+	Block next() throws ClassNotFoundException, IOException {
+		Block next = null;
+		final BigInteger thisBlock = C.sha(this);
+		final List<Block> candidates = new ArrayList<Block>();
+
+		final ChainInfo after = getChainInfoBefore();
+		for (int j = 1; j < 10; j++) {
+			final String fileName = U.getBlockFileName((after.height + 1), j);
+			if (new File(fileName).exists()) {
+				final Block b = U.loadBlockFromFile(fileName);
+				if (b.lastBlockHash.equals(thisBlock)) {
+					candidates.add(b);
+					break;
+				}
+			} else break;
+		}
+
+		if (candidates.size() == 1) {
+			next = candidates.get(0);
+		} else if (candidates.size() > 1) {
+			final Random rand = new Random();
+			next = candidates.get(rand.nextInt(candidates.size()));
+		}
+
+		return next;
+	}
 }
 
-class BlockchainInfo extends MyObject implements Serializable {
+class ChainInfo extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	long height;
 	BigInteger chainWork;
@@ -51,7 +91,7 @@ class BlockchainInfo extends MyObject implements Serializable {
 	}
 
 	@Override
-	public String toString(final BlockchainInfo chain) {
+	public String toString(final ChainInfo chain) {
 		return toString();
 	}
 }
@@ -68,11 +108,11 @@ class Input extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		throw new RuntimeException("Error: Input toString NO BlockchainInfo");
+		throw new RuntimeException("Error: Input toString NO ChainInfo");
 	}
 
 	@Override
-	public String toString(final BlockchainInfo chain) {
+	public String toString(final ChainInfo chain) {
 		final Output o = B.getOutput(this, chain);
 		if (o != null) return "{\"input\":" + o.toString(chain) + "}";
 		else return "{\"input\":\"null\"}";
@@ -102,7 +142,7 @@ abstract class MyObject {
 		}
 	}
 
-	public abstract String toString(BlockchainInfo chain);
+	public abstract String toString(ChainInfo chain);
 }
 
 class Output extends MyObject implements Serializable {
@@ -117,11 +157,11 @@ class Output extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		throw new RuntimeException("Error: Output toString NO BlockchainInfo");
+		throw new RuntimeException("Error: Output toString NO ChainInfo");
 	}
 
 	@Override
-	public String toString(final BlockchainInfo chain) {
+	public String toString(final ChainInfo chain) {
 		try {
 			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey(chain).hashCode())
 					+ "\", \"value\":" + value + "}}";
@@ -130,7 +170,7 @@ class Output extends MyObject implements Serializable {
 		}
 	}
 
-	PublicKey getPublicKey(final BlockchainInfo chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	PublicKey getPublicKey(final ChainInfo chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		return C.getPublicKey(addressOrPublicKey, chain);
 	}
 }
@@ -154,7 +194,7 @@ class Transaction extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		try {
-			return toString(B.bestBlockchainInfo);
+			return toString(B.bestChain);
 		} catch (final Exception e) {
 			U.d(2, e.getMessage());
 			return "{}";
@@ -162,7 +202,7 @@ class Transaction extends MyObject implements Serializable {
 	}
 
 	@Override
-	public String toString(final BlockchainInfo chain) {
+	public String toString(final ChainInfo chain) {
 		final String strInputs = U.listToString(inputs, chain);
 		final String strOutputs = U.listToString(outputs, chain);
 		String s = "{\"tx\":{";
