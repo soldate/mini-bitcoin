@@ -36,9 +36,7 @@ You can try put a breakpoint in the first line
 * K.SEEDS[0] = "localhost";
 ```
 
-and go debugging too. :-)
-
-No threadssss, just ONE execution line.
+and go debugging. :-)
 
 ## Docker
 Start two nodes to check how the peers exchange messages. 
