@@ -33,9 +33,21 @@ class N {
 		final InetAddress myIp = InetAddress.getLocalHost();
 
 		if (K.SEEDS != null) {
-			for (final String s : K.SEEDS) {
+			for (String s : K.SEEDS) {
 				try {
-					final InetAddress server = InetAddress.getByName(s);
+					InetAddress server = null;
+					try {
+						server = InetAddress.getByName(s);
+					} catch (final UnknownHostException e) {
+						// if seed address is unknown, use localhost
+						// seed = docker-compose. localhost = local test
+						if ("seed".equals(s)) {
+							s = "localhost";
+							server = InetAddress.getByName(s);
+						} else {
+							throw e;
+						}
+					}
 
 					// Am i trying to connect to myself?
 					if (server.getHostAddress().contains(myIp.getHostAddress())) {

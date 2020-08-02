@@ -2,71 +2,60 @@
 > Minimal Bitcoin Protocol in Java (Satoshi White Paper, not Bitcoin Core)
 
 ## Description
-Just small 8 files. Standard Java Library. No JARs.
+Just small 8 files. Standard Java Library.
 
 Wallet(Private and Public keys), Blockchain, Miner, P2P (Server and client), RPC(http).. all ready.
 
-Our goal is to decentralize the power of create currencies. 
+[Bitcoin / *Mini-Bitcoin White Paper](https://bitcoin.org/bitcoin.pdf) (*except Merkle-tree)
 
-There are about 10 million of Java programmers around the world.
+## Requirements
 
-Currencies must compete in the market, like any goods or services. 
+You need install to run
+* git
+* docker
 
-Fork this. Create your own cryptocurrency!
+and (for developers)
+* JRE
+* Eclipse IDE (recommended)
 
-[Bitcoin White Paper](https://bitcoin.org/bitcoin.pdf)
+## How To GO - Users and Developers
+For the first time, do
 
-## How To GO
 ```
 git clone https://github.com/soldate/mini-bitcoin.git
+```
+
+Then
+
+```
 cd mini-bitcoin/
+git pull
 docker build -t mbtc .
 docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
 ```
+
 Go to [http://localhost:8080](http://localhost:8080)
 
 ## Understanding the code
 
 Inside mbtc.Main you get the "main method" starting point.
 
-Run and go to http://localhost:8080/
+Put a breakpoint in the first line and go debugging. :-)
 
-You can try put a breakpoint in the first line 
-
-```
-* K.SEEDS[0] = "localhost";
-```
-
-and go debugging. :-)
-
-## Docker
+## Docker-compose
 Start two nodes to check how the peers exchange messages. 
 
-WARNING: 
-* Clean ./mini-bitcoin/data folder before build.
-* UNCOMMENT this line in Main.java
-
 ``` 
- K.SEEDS[0] = "localhost";
-```
-
-You can run just one docker(peer) and then run in Eclipse another peer to easily debug.
-
-```
-docker build -t mbtc .
-docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
-```
-Or use docker-compose to run two peers
-
-WARNING:
-* Clean ./mini-bitcoin/data folder before build.
-* COMMENT this line in Main.java
-
-``` 
-// K.SEEDS[0] = "localhost";
-
 $ docker-compose build
 $ docker-compose up
+```
+
+After this, maybe you want to start another peer in your favorite IDE for debugging.
+
+To stop, type in another terminal
+
+``` 
+$ docker-compose down
 ```
 
 ## What is address?

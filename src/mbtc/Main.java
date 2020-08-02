@@ -25,8 +25,6 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) {
 		try {
-			K.SEEDS[0] = "localhost"; // uncomment for local test. comment for docker-compose test
-
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
