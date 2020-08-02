@@ -44,7 +44,7 @@ Inside mbtc.Main you get the "main method" starting point.
 Put a breakpoint in the first line and go debugging. :-)
 
 ## Docker-compose
-Start two nodes to check how the peers exchange messages. 
+This commands below will start two nodes, so you can check how the peers exchange messages. 
 
 ``` 
 $ docker-compose build
