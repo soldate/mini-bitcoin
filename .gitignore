@@ -1,4 +1,5 @@
 /.settings
 /bin
 *.class
-/data
+/data/keypair
+/data/utxo
