@@ -15,8 +15,9 @@ You need install to run
 * docker
 
 and (for developers)
-* JRE
+* Java
 * Eclipse IDE (recommended)
+* docker-compose (recommended)
 
 ## How To GO - Users and Developers
 For the first time, do
