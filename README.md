@@ -16,14 +16,16 @@ Fork this. Create your own cryptocurrency!
 
 [Bitcoin White Paper](https://bitcoin.org/bitcoin.pdf)
 
-## How to GO
-* Download [Eclipse IDE](https://www.eclipse.org/downloads/)
-
-* Clone or fork this repository.
-
-* Eclipse File->New->Java Project (copy files inside when ready)
+## How To GO
+```
+git clone https://github.com/soldate/mini-bitcoin.git
+cd mini-bitcoin/
+docker build -t mbtc .
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
+```
 
 ## Understanding the code
+
 Inside mbtc.Main you get the "main method" starting point.
 
 Run and go to http://localhost:8080/
@@ -42,7 +44,7 @@ No threadssss, just ONE execution line.
 Start two nodes to check how the peers exchange messages. 
 
 WARNING: 
-* Clean Blockchain/KeyPair/UTXO folders before build.
+* Clean ./mini-bitcoin/data folder before build.
 * UNCOMMENT this line in Main.java
 
 ``` 
@@ -53,12 +55,12 @@ You can run just one docker(peer) and then run in Eclipse another peer to easily
 
 ```
 docker build -t mbtc .
-docker run -it -p 10762:10762 --rm mbtc
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
 ```
 Or use docker-compose to run two peers
 
 WARNING:
-* Clean Blockchain/KeyPair/UTXO folders before build. 
+* Clean ./mini-bitcoin/data folder before build.
 * COMMENT this line in Main.java
 
 ``` 

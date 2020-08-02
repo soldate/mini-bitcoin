@@ -1,7 +1,6 @@
 FROM openjdk:11
 MAINTAINER Marconi Soldate
-COPY . /usr/src
-WORKDIR /usr/src
+COPY . /tmp
+WORKDIR /tmp
 RUN javac -cp ./src/ ./src/mbtc/*.java -d ./bin
 ENTRYPOINT java -cp ./bin mbtc.Main
-EXPOSE 10762

@@ -15,6 +15,9 @@ class K {
 	static final int MIN_BLOCK_SIZE = 1024; // Block with only coinbase tx. Im NOT sure about this value.
 	static final String SPEC = "secp256k1";
 	static final String ALGO = "EC";
+	static final String BLOCK_FOLDER = "data/blockchain/";
+	static final String UTXO_FOLDER = "data/utxo/";
+	static final String KEY_FOLDER = "data/keypair/";
 
 	// bigger value means more mining attempts and slow terminal (and net) response to user.
 	static final long MINE_ROUND = 5 * 10000;

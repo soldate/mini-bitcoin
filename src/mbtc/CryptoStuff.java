@@ -52,9 +52,9 @@ class C {
 	}
 
 	private static KeyPair loadKeyPairFromFile() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
-		if (new File("KeyPair/private.key").exists() && new File("KeyPair/public.key").exists()) {
-			final PrivateKey privateKey = getPrivateKeyFromFile("KeyPair/private.key");
-			final PublicKey publicKey = getPublicKeyFromFile("KeyPair/public.key");
+		if (new File(K.KEY_FOLDER + "private.key").exists() && new File(K.KEY_FOLDER + "public.key").exists()) {
+			final PrivateKey privateKey = getPrivateKeyFromFile(K.KEY_FOLDER + "private.key");
+			final PublicKey publicKey = getPublicKeyFromFile(K.KEY_FOLDER + "public.key");
 			return new KeyPair(publicKey, privateKey);
 		} else {
 			throw new RuntimeException("Missing public or private key file");
@@ -95,8 +95,8 @@ class C {
 				continue;
 			}
 		}
-		saveKey(keypair.getPrivate(), "KeyPair/private.key");
-		saveKey(publicKey, "KeyPair/public.key");
+		saveKey(keypair.getPrivate(), K.KEY_FOLDER + "private.key");
+		saveKey(publicKey, K.KEY_FOLDER + "public.key");
 		return keypair;
 	}
 
@@ -134,7 +134,7 @@ class C {
 
 	static void loadOrCreateKeyPair()
 			throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException, IOException {
-		if (new File("KeyPair/private.key").exists()) {
+		if (new File(K.KEY_FOLDER + "private.key").exists()) {
 			U.d(3, "INFO: Loading keys");
 			Main.me = loadKeyPairFromFile();
 		} else {

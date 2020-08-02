@@ -24,7 +24,7 @@ class B {
 		bestChain.blockHash = genesisHash;
 		bestChain.target = new BigInteger(K.INITIAL_TARGET, 16);
 		bestChain.UTXO = new HashMap<BigInteger, Transaction>();
-		U.cleanFolder("UTXO/");
+		U.cleanFolder(K.UTXO_FOLDER);
 		saveChainInfo(bestChain);
 	}
 
@@ -152,13 +152,13 @@ class B {
 			fileName = U.getBlockFileName(info.height, i);
 		} while (new File(fileName).exists());
 
-		new File("Blockchain").mkdirs();
+		new File(K.BLOCK_FOLDER).mkdirs();
 		Files.write(new File(fileName).toPath(), U.serialize(block));
 	}
 
 	private static void saveChainInfo(final ChainInfo b) {
 		try {
-			U.writeToFile("UTXO/" + b.blockHash, U.serialize(b));
+			U.writeToFile(K.UTXO_FOLDER + b.blockHash, U.serialize(b));
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}

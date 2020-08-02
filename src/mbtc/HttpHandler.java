@@ -96,7 +96,7 @@ class HttpHandler {
 
 			case "/block":
 				setJsonResponse(exchange);
-				fileName = "Blockchain/" + cmd[1];
+				fileName = K.BLOCK_FOLDER + cmd[1];
 				if (new File(fileName).exists()) {
 					final Block block = U.loadBlockFromFile(fileName);
 					response = block.toString();
@@ -111,7 +111,7 @@ class HttpHandler {
 				x: for (long i = 1; i < Long.MAX_VALUE; i++) {
 					for (long j = 1; j < 10; j++) {
 						blockName = String.format("%012d", i) + "_" + j + ".block";
-						fileName = "Blockchain/" + blockName;
+						fileName = K.BLOCK_FOLDER + blockName;
 						if (new File(fileName).exists()) {
 							response += "\"" + blockName + "\", ";
 						} else {

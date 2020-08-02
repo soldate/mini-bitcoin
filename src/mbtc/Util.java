@@ -65,7 +65,7 @@ class U {
 	}
 
 	static String getBlockFileName(final long height, final int i) {
-		return "Blockchain/" + String.format("%012d", height) + "_" + i + ".block";
+		return K.BLOCK_FOLDER + String.format("%012d", height) + "_" + i + ".block";
 	}
 
 	static long getGoodRandom() {

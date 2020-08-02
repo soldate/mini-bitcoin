@@ -35,7 +35,7 @@ class Block extends MyObject implements Serializable {
 	ChainInfo getChainInfoAfter() throws ClassNotFoundException, IOException {
 		ChainInfo chain = null;
 		try {
-			chain = U.loadChainInfoFromFile("UTXO/" + C.sha(this));
+			chain = U.loadChainInfoFromFile(K.UTXO_FOLDER + C.sha(this));
 		} catch (final NoSuchFileException e) {
 		}
 		return chain;
@@ -43,7 +43,7 @@ class Block extends MyObject implements Serializable {
 
 	ChainInfo getChainInfoBefore() throws ClassNotFoundException, IOException {
 		if (lastBlockHash == null) return null;
-		final ChainInfo chain = U.loadChainInfoFromFile("UTXO/" + lastBlockHash);
+		final ChainInfo chain = U.loadChainInfoFromFile(K.UTXO_FOLDER + lastBlockHash);
 		return chain;
 	}
 
