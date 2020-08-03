@@ -142,7 +142,7 @@ public class Main {
 	}
 
 	private static void startHttpServer() throws IOException {
-		final HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+		final HttpServer server = HttpServer.create(new InetSocketAddress(K.RPC_PORT), 0);
 		final HttpContext context = server.createContext("/");
 		context.setHandler(HttpHandler::handleRequest);
 		server.start();

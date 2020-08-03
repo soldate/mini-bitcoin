@@ -4,7 +4,8 @@ class K {
 	// To create your own coin, change PORT, GENESIS_MSG, SEEDS (URLs) and set START_TIME as a fixed timestamp.
 	// --------------------------------------------
 	static boolean DEBUG_MODE = true; // show messages
-	static int PORT = 10762;
+	static int P2P_PORT = 10762;
+	static int RPC_PORT = 8080;
 	static final String GENESIS_MSG = "Marconi Pereira Soldate";
 	static final long START_TIME = 1577847600000L;// System.currentTimeMillis();// 1577847600000L; // 2020-01-01
 	static String[] SEEDS = { "seed" }; // "seed" for docker-compose network

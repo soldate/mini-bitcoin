@@ -54,7 +54,7 @@ class N {
 						U.d(2, "WARN: do NOT connect to yourself");
 						continue;
 					}
-					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.PORT));
+					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.P2P_PORT));
 					socketChannel.configureBlocking(false);
 					p2pChannels.put(socketChannel, new Buffer());
 					U.d(1, "NET: i am CLIENT: " + socketChannel.getLocalAddress() + " of SERVER "
@@ -148,7 +148,7 @@ class N {
 		final ServerSocketChannel serverSC = ServerSocketChannel.open();
 		try {
 			serverSC.configureBlocking(false);
-			serverSC.bind(new InetSocketAddress(K.PORT));
+			serverSC.bind(new InetSocketAddress(K.P2P_PORT));
 		} catch (final BindException e) {
 			U.d(2, "ERROR: can NOT start a SERVER");
 			return null;
