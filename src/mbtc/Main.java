@@ -93,8 +93,6 @@ public class Main {
 			// Let's mine a little
 			if (startMining) {
 				mineALittleBit();
-			} else {
-				U.sleep(1000); // take a breath
 			}
 
 			// timer
@@ -102,19 +100,21 @@ public class Main {
 		}
 	}
 
-	private static void shouldIDoSomethingNow(final long now) throws IOException {
-		final long secondsFromLastAction = (now - N.lastAction) / 1000;
+	private static void shouldIDoSomethingNow(final long now) throws IOException, InterruptedException {
+		final long secondsFromLastBlock = (now - N.lastAddBlock) / 1000;
+		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 
-		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing
-			U.d(3, "INFO: Should i do something?");
-			if (!startMining) {
-				startMining = true;
-				U.w("Starting mining...");
-			}
-			N.lastAction = now;
+		if (secondsFromLastBlock > 10 && !startMining) { // More than 10s without receive blocks
+			U.d(1, "INFO: Starting mining...");
+			startMining = true;
 
-		} else if (secondsFromLastAction > 2) {
+		} else if (secondsFromLastRequest > 4) { // Ask for blocks
 			N.toSend(U.serialize(B.bestChain.blockHash));
+			N.lastRequest = now;
+
+		} else if (!startMining) {
+			U.d(3, "INFO: sleeping...");
+			U.sleep(1000); // take a breath
 		}
 	}
 

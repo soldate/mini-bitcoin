@@ -123,7 +123,7 @@ class HttpHandler {
 				response += "\"...\"]}";
 				break;
 
-			case "/info":
+			case "/chain":
 				setJsonResponse(exchange);
 				response = B.bestChain.toString();
 				break;

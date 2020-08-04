@@ -100,7 +100,7 @@ class C {
 		return keypair;
 	}
 
-	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final ChainInfo chain) {
+	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final Chain chain) {
 		final int address = publicKey.hashCode();
 		if (chain.address2PublicKey.get(address) != null) {
 			return U.int2BigInt(address);
@@ -109,7 +109,7 @@ class C {
 		}
 	}
 
-	static PublicKey getPublicKey(final BigInteger addressOrPublicKey, final ChainInfo chain)
+	static PublicKey getPublicKey(final BigInteger addressOrPublicKey, final Chain chain)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		if (U.isInteger32bits(addressOrPublicKey)) {
 			final PublicKey p = chain.address2PublicKey.get(addressOrPublicKey.intValue());

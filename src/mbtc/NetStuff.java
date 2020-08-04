@@ -23,7 +23,8 @@ class N {
 	}
 
 	static ServerSocketChannel serverSC;
-	static long lastAction = System.currentTimeMillis();
+	static long lastAddBlock = System.currentTimeMillis();
+	static long lastRequest = System.currentTimeMillis();
 	static ByteBuffer p2pReadBuffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	static Map<SocketChannel, Buffer> p2pChannels = new HashMap<SocketChannel, Buffer>();
 
@@ -99,7 +100,7 @@ class N {
 						if (read) {
 							Main.startMining = false;
 							U.d(2, "INFO: miner off");
-							N.lastAction = System.currentTimeMillis();
+							N.lastAddBlock = System.currentTimeMillis();
 						} else {
 							// if he sent block 1 to you, send block 2 to him
 							final Block next = b.next();

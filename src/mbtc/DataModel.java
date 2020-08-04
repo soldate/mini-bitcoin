@@ -2,7 +2,6 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
-import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
@@ -17,7 +16,7 @@ class Block extends MyObject implements Serializable {
 	@Override
 	public String toString() {
 		try {
-			return toString(getChainInfoBefore());
+			return toString(getChain());
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Error: Block toString " + lastBlockHash);
@@ -25,25 +24,16 @@ class Block extends MyObject implements Serializable {
 	}
 
 	@Override
-	public String toString(final ChainInfo chain) {
+	public String toString(final Chain chain) {
 		if (chain == null) return "{}";
 		final String s = B.listToString(txs, chain);
 		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
 				+ ", \"txs\":" + s + "}}";
 	}
 
-	ChainInfo getChainInfoAfter() throws ClassNotFoundException, IOException {
-		ChainInfo chain = null;
-		try {
-			chain = B.loadChainInfo(C.sha(this));
-		} catch (final NoSuchFileException e) {
-		}
-		return chain;
-	}
-
-	ChainInfo getChainInfoBefore() throws ClassNotFoundException, IOException {
+	Chain getChain() throws ClassNotFoundException, IOException {
 		if (lastBlockHash != null && B.blockExists(lastBlockHash)) {
-			final ChainInfo chain = B.loadChainInfo(lastBlockHash);
+			final Chain chain = B.loadChain(lastBlockHash);
 			return chain;
 		} else {
 			return null;
@@ -66,7 +56,7 @@ class Block extends MyObject implements Serializable {
 	}
 }
 
-class ChainInfo extends MyObject implements Serializable {
+class Chain extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	long height;
 	BigInteger chainWork;
@@ -77,12 +67,12 @@ class ChainInfo extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		return "{\"info\":{\"height\":" + height + ", \"chainWork\":" + chainWork + ", \"target\":" + target
+		return "{\"chain\":{\"height\":" + height + ", \"chainWork\":" + chainWork + ", \"target\":" + target
 				+ ", \"blockHash\":" + blockHash + "}}";
 	}
 
 	@Override
-	public String toString(final ChainInfo chain) {
+	public String toString(final Chain chain) {
 		return toString();
 	}
 }
@@ -99,11 +89,11 @@ class Input extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		throw new RuntimeException("Error: Input toString NO ChainInfo");
+		throw new RuntimeException("Error: Input toString NO Chain");
 	}
 
 	@Override
-	public String toString(final ChainInfo chain) {
+	public String toString(final Chain chain) {
 		final Output o = B.getOutput(this, chain);
 		if (o != null) return "{\"input\":" + o.toString(chain) + "}";
 		else return "{\"input\":\"null\"}";
@@ -133,7 +123,7 @@ abstract class MyObject {
 		}
 	}
 
-	public abstract String toString(ChainInfo chain);
+	public abstract String toString(Chain chain);
 }
 
 class Output extends MyObject implements Serializable {
@@ -148,11 +138,11 @@ class Output extends MyObject implements Serializable {
 
 	@Override
 	public String toString() {
-		throw new RuntimeException("Error: Output toString NO ChainInfo");
+		throw new RuntimeException("Error: Output toString NO Chain");
 	}
 
 	@Override
-	public String toString(final ChainInfo chain) {
+	public String toString(final Chain chain) {
 		try {
 			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey(chain).hashCode())
 					+ "\", \"value\":" + value + "}}";
@@ -161,7 +151,7 @@ class Output extends MyObject implements Serializable {
 		}
 	}
 
-	PublicKey getPublicKey(final ChainInfo chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	PublicKey getPublicKey(final Chain chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		return C.getPublicKey(addressOrPublicKey, chain);
 	}
 }
@@ -193,7 +183,7 @@ class Transaction extends MyObject implements Serializable {
 	}
 
 	@Override
-	public String toString(final ChainInfo chain) {
+	public String toString(final Chain chain) {
 		final String strInputs = B.listToString(inputs, chain);
 		final String strOutputs = B.listToString(outputs, chain);
 		String s = "{\"tx\":{";
