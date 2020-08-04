@@ -2,6 +2,7 @@ package mbtc;
 
 import java.io.*;
 import java.math.*;
+import java.nio.*;
 import java.nio.channels.*;
 import java.nio.file.*;
 import java.security.*;
@@ -231,6 +232,8 @@ class B {
 			final SocketChannel from) throws InvalidKeyException, SignatureException, IOException,
 			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 
+		// TODO validate future block and tx message size
+
 		ChainInfo chainInfo = null;
 
 		chainInfo = block.getChainInfoAfter();
@@ -295,7 +298,10 @@ class B {
 				return false;
 			}
 		} else {
-			U.d(2, "WARN: Unknown 'last block' of this Block.");
+			U.d(2, "WARN: Unknown 'last block' of this Block. Asking for block.");
+			if (from != null) {
+				from.write(ByteBuffer.wrap(U.serialize(block.lastBlockHash)));
+			}
 			return false;
 		}
 		return true;
@@ -351,6 +357,20 @@ class B {
 			balance += o.value;
 		}
 		return balance;
+	}
+
+	static Block getBlock(final BigInteger blockHash) throws ClassNotFoundException, IOException {
+		final ChainInfo chain = loadChainInfo(blockHash);
+		for (int j = 1; j < 10; j++) {
+			final String fileName = getBlockFileName(chain.height, j);
+			if (new File(fileName).exists()) {
+				final Block b = loadBlockFromFile(fileName);
+				if (blockHash.equals(C.sha(b))) {
+					return b;
+				}
+			} else break;
+		}
+		return null;
 	}
 
 	static String getBlockFileName(final long height, final int i) {

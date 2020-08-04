@@ -57,6 +57,13 @@ class Block extends MyObject implements Serializable {
 			return next;
 		} else return null;
 	}
+
+	Block previous() throws ClassNotFoundException, IOException {
+		if (B.blockExists(lastBlockHash)) {
+			final Block previous = B.getBlock(lastBlockHash);
+			return previous;
+		} else return null;
+	}
 }
 
 class ChainInfo extends MyObject implements Serializable {

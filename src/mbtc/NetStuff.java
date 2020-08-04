@@ -90,6 +90,7 @@ class N {
 			} else {
 				try {
 					final Object txOrBlock = U.deserialize(inUse.buffer.array());
+
 					if (txOrBlock instanceof Block) {
 						U.d(1, "NET: READ a BLOCK " + U.str(socketChannel));
 						final Block b = (Block) txOrBlock;
@@ -99,12 +100,12 @@ class N {
 							Main.startMining = false;
 							U.d(2, "INFO: miner off");
 							N.lastAction = System.currentTimeMillis();
-						}
-
-						// if he sent block 1 to you, send block 2 to him
-						final Block next = b.next();
-						if (next != null) {
-							socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+						} else {
+							// if he sent block 1 to you, send block 2 to him
+							final Block next = b.next();
+							if (next != null) {
+								socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+							}
 						}
 
 					} else if (txOrBlock instanceof Transaction) {
@@ -113,14 +114,23 @@ class N {
 						if (read) N.toSend(socketChannel, U.serialize(txOrBlock));
 
 					} else if (txOrBlock instanceof BigInteger) {
-						U.d(2, "NET: Asking for Block after: " + txOrBlock + " - " + U.str(socketChannel));
+						U.d(2, "NET: Somebody is asking for this block or for block after this: " + txOrBlock + " - "
+								+ U.str(socketChannel));
+
 						final BigInteger blockHash = (BigInteger) txOrBlock;
-						if (B.blockExists(blockHash)) {
-							final Block next = B.getNextBlock(blockHash);
-							if (next != null) {
-								socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
-							}
+						final Random random = new Random();
+
+						Block b = null;
+						if (B.blockExists(blockHash) && random.nextBoolean()) {
+							b = B.getNextBlock(blockHash);
+						} else {
+							b = B.getBlock(blockHash);
 						}
+
+						if (b != null) {
+							socketChannel.write(ByteBuffer.wrap(U.serialize(b)));
+						}
+
 					} else {
 						disconnect = true;
 					}

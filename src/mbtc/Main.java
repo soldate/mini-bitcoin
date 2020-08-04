@@ -50,42 +50,29 @@ public class Main {
 	}
 
 	private static void mineALittleBit() throws IOException, InvalidKeyException, SignatureException,
-			InterruptedException, ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
-		if (startMining) {
-			U.d(3, "INFO: mining...");
-			boolean iFoundIt = false;
-			final long l = U.getGoodRandom();
-			final Block candidate = B.createBlockCandidate();
-			final BigInteger target = B.bestChain.target;
+			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 
-			/*
-			 * -- debug tips --
-			 *
-			 * to stop 'for' loop: Inspect "l + K.MINE_ROUND" and set the value to "i"
-			 *
-			 * to easily mine: stop, remove all breakpoints and put just one breakpoint in "We mine a NEW BLOCK!" line
-			 * OR change Config.START_TARGET (ex: from 00001.. to 00100..)
-			 */
+		boolean iFoundIt = false;
+		final long l = U.getGoodRandom();
+		final Block candidate = B.createBlockCandidate();
+		final BigInteger target = B.bestChain.target;
 
-			// mine
-			for (long i = l; i < (l + K.MINE_ROUND); i++) {
-				candidate.nonce = i;
-				final BigInteger candidateHash = C.sha(candidate);
-				if (target.compareTo(candidateHash) > 0) {
-					U.d(1, "INFO: We mine a NEW BLOCK!");
-					iFoundIt = true;
-					break;
-				}
+		U.d(3, "INFO: mining...");
+		for (long i = l; i < (l + K.MINE_ROUND); i++) {
+			candidate.nonce = i;
+			final BigInteger candidateHash = C.sha(candidate);
+			if (target.compareTo(candidateHash) > 0) {
+				U.d(1, "INFO: We mine a NEW BLOCK!");
+				iFoundIt = true;
+				break;
 			}
-
-			if (iFoundIt) {
-				B.addBlock(candidate, null);
-				if (K.DEBUG_MODE) U.sleep(); // wait to increase chain split chance
-			}
-		} else {
-			// take a breath
-			U.sleep(500);
 		}
+
+		if (iFoundIt) {
+			B.addBlock(candidate, null);
+			if (K.DEBUG_MODE) U.sleep(); // wait others (to increase chain split chance)
+		}
+
 	}
 
 	// Async! Read terminal, send/receive networks messages, mine a little bit and do it all again and again.
@@ -104,7 +91,11 @@ public class Main {
 			N.p2pHandler();
 
 			// Let's mine a little
-			mineALittleBit();
+			if (startMining) {
+				mineALittleBit();
+			} else {
+				U.sleep(1000); // take a breath
+			}
 
 			// timer
 			shouldIDoSomethingNow(System.currentTimeMillis());
@@ -114,9 +105,8 @@ public class Main {
 	private static void shouldIDoSomethingNow(final long now) throws IOException {
 		final long secondsFromLastAction = (now - N.lastAction) / 1000;
 
-		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing (or just mining)
+		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing
 			U.d(3, "INFO: Should i do something?");
-			// do something...
 			if (!startMining) {
 				startMining = true;
 				U.w("Starting mining...");
