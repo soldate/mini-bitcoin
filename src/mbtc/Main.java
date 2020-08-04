@@ -125,7 +125,6 @@ public class Main {
 
 		} else if (secondsFromLastAction > 2) {
 			N.toSend(U.serialize(B.bestChain.blockHash));
-			N.lastAction = now;
 		}
 	}
 
