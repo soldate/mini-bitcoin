@@ -64,10 +64,6 @@ class U {
 		return is.readObject();
 	}
 
-	static String getBlockFileName(final long height, final int i) {
-		return K.BLOCK_FOLDER + String.format("%012d", height) + "_" + i + ".block";
-	}
-
 	static long getGoodRandom() {
 		long l = random.nextLong();
 		// Long.MAX_VALUE + 1 is a negative number
@@ -88,25 +84,6 @@ class U {
 			return true;
 		}
 		return false;
-	}
-
-	static <T extends MyObject> String listToString(final List<T> list, final ChainInfo chain) {
-		if (list == null) return null;
-		String s = "[";
-		for (final MyObject o : list) {
-			s += o.toString(chain) + ", ";
-		}
-		s = s.substring(0, s.length() - 2);
-		s += "]";
-		return s;
-	}
-
-	static Block loadBlockFromFile(final String fileName) throws IOException, ClassNotFoundException {
-		return (Block) loadObjectFromFile(fileName);
-	}
-
-	static ChainInfo loadChainInfoFromFile(final String fileName) throws IOException, ClassNotFoundException {
-		return (ChainInfo) loadObjectFromFile(fileName);
 	}
 
 	static Object loadObjectFromFile(final String fileName) throws IOException, ClassNotFoundException {

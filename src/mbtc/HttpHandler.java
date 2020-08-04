@@ -90,7 +90,7 @@ class HttpHandler {
 					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs, message);
 					response = tx.toString();
-					N.toSend(null, U.serialize(tx));
+					N.toSend(U.serialize(tx));
 				}
 				break;
 
@@ -98,7 +98,7 @@ class HttpHandler {
 				setJsonResponse(exchange);
 				fileName = K.BLOCK_FOLDER + cmd[1];
 				if (new File(fileName).exists()) {
-					final Block block = U.loadBlockFromFile(fileName);
+					final Block block = B.loadBlockFromFile(fileName);
 					response = block.toString();
 				}
 				break;

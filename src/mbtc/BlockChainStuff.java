@@ -102,6 +102,10 @@ class B {
 		return inputList;
 	}
 
+	private static ChainInfo loadChainInfoFromFile(final String fileName) throws IOException, ClassNotFoundException {
+		return (ChainInfo) U.loadObjectFromFile(fileName);
+	}
+
 	private static Output myOutputReward() {
 		final int myAddress = Main.me.getPublic().hashCode();
 		if (bestChain.address2PublicKey.containsKey(myAddress)) {
@@ -149,7 +153,7 @@ class B {
 		int i = 0;
 		do {
 			i++;
-			fileName = U.getBlockFileName(info.height, i);
+			fileName = getBlockFileName(info.height, i);
 		} while (new File(fileName).exists());
 
 		new File(K.BLOCK_FOLDER).mkdirs();
@@ -325,6 +329,11 @@ class B {
 		return success;
 	}
 
+	static boolean blockExists(final BigInteger blockHash) {
+		if (new File(K.UTXO_FOLDER + blockHash).exists()) return true;
+		else return false;
+	}
+
 	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException {
 		final Block candidate = new Block();
 		candidate.time = System.currentTimeMillis();
@@ -342,6 +351,10 @@ class B {
 			balance += o.value;
 		}
 		return balance;
+	}
+
+	static String getBlockFileName(final long height, final int i) {
+		return K.BLOCK_FOLDER + String.format("%012d", height) + "_" + i + ".block";
 	}
 
 	static List<Input> getMoney(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
@@ -365,6 +378,32 @@ class B {
 		return inputs;
 	}
 
+	static Block getNextBlock(final BigInteger blockHash) throws ClassNotFoundException, IOException {
+		Block next = null;
+		final List<Block> candidates = new ArrayList<Block>();
+
+		final ChainInfo after = loadChainInfo(blockHash);
+		for (int j = 1; j < 10; j++) {
+			final String fileName = getBlockFileName((after.height + 1), j);
+			if (new File(fileName).exists()) {
+				final Block b = loadBlockFromFile(fileName);
+				if (b.lastBlockHash.equals(blockHash)) {
+					candidates.add(b);
+					break;
+				}
+			} else break;
+		}
+
+		if (candidates.size() == 1) {
+			next = candidates.get(0);
+		} else if (candidates.size() > 1) {
+			final Random rand = new Random();
+			next = candidates.get(rand.nextInt(candidates.size()));
+		}
+
+		return next;
+	}
+
 	static Output getOutput(final Input input) {
 		return getOutput(input, bestChain);
 	}
@@ -380,14 +419,25 @@ class B {
 		return addBlock(block, false, false, null);
 	}
 
+	static <T extends MyObject> String listToString(final List<T> list, final ChainInfo chain) {
+		if (list == null) return null;
+		String s = "[";
+		for (final MyObject o : list) {
+			s += o.toString(chain) + ", ";
+		}
+		s = s.substring(0, s.length() - 2);
+		s += "]";
+		return s;
+	}
+
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
 			InvalidKeyException, SignatureException, InvalidKeySpecException {
 		String fileName = null;
 		x: for (long i = 1; i < Long.MAX_VALUE; i++) {
 			for (int j = 1; j < 10; j++) {
-				fileName = U.getBlockFileName(i, j);
+				fileName = getBlockFileName(i, j);
 				if (new File(fileName).exists()) {
-					final Block block = U.loadBlockFromFile(fileName);
+					final Block block = loadBlockFromFile(fileName);
 					addChainInfo(block);
 				} else {
 					if (j == 1) break x;
@@ -395,5 +445,13 @@ class B {
 				}
 			}
 		}
+	}
+
+	static Block loadBlockFromFile(final String fileName) throws IOException, ClassNotFoundException {
+		return (Block) U.loadObjectFromFile(fileName);
+	}
+
+	static ChainInfo loadChainInfo(final BigInteger blockHash) throws IOException, ClassNotFoundException {
+		return loadChainInfoFromFile(K.UTXO_FOLDER + blockHash);
 	}
 }

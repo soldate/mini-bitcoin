@@ -84,7 +84,7 @@ public class Main {
 			}
 		} else {
 			// take a breath
-			U.sleep();
+			U.sleep(500);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class Main {
 		}
 	}
 
-	private static void shouldIDoSomethingNow(final long now) {
+	private static void shouldIDoSomethingNow(final long now) throws IOException {
 		final long secondsFromLastAction = (now - N.lastAction) / 1000;
 
 		if (secondsFromLastAction > 10) { // More than 10s passed doing nothing (or just mining)
@@ -121,6 +121,10 @@ public class Main {
 				startMining = true;
 				U.w("Starting mining...");
 			}
+			N.lastAction = now;
+
+		} else if (secondsFromLastAction > 2) {
+			N.toSend(U.serialize(B.bestChain.blockHash));
 			N.lastAction = now;
 		}
 	}

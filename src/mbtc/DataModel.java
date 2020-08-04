@@ -27,7 +27,7 @@ class Block extends MyObject implements Serializable {
 	@Override
 	public String toString(final ChainInfo chain) {
 		if (chain == null) return "{}";
-		final String s = U.listToString(txs, chain);
+		final String s = B.listToString(txs, chain);
 		return "{\"block\": {\"time\":" + time + ", \"nonce\":" + nonce + ", \"lastBlockHash\":" + lastBlockHash
 				+ ", \"txs\":" + s + "}}";
 	}
@@ -35,43 +35,27 @@ class Block extends MyObject implements Serializable {
 	ChainInfo getChainInfoAfter() throws ClassNotFoundException, IOException {
 		ChainInfo chain = null;
 		try {
-			chain = U.loadChainInfoFromFile(K.UTXO_FOLDER + C.sha(this));
+			chain = B.loadChainInfo(C.sha(this));
 		} catch (final NoSuchFileException e) {
 		}
 		return chain;
 	}
 
 	ChainInfo getChainInfoBefore() throws ClassNotFoundException, IOException {
-		if (lastBlockHash == null) return null;
-		final ChainInfo chain = U.loadChainInfoFromFile(K.UTXO_FOLDER + lastBlockHash);
-		return chain;
+		if (lastBlockHash != null && B.blockExists(lastBlockHash)) {
+			final ChainInfo chain = B.loadChainInfo(lastBlockHash);
+			return chain;
+		} else {
+			return null;
+		}
 	}
 
 	Block next() throws ClassNotFoundException, IOException {
-		Block next = null;
-		final BigInteger thisBlock = C.sha(this);
-		final List<Block> candidates = new ArrayList<Block>();
-
-		final ChainInfo after = getChainInfoBefore();
-		for (int j = 1; j < 10; j++) {
-			final String fileName = U.getBlockFileName((after.height + 1), j);
-			if (new File(fileName).exists()) {
-				final Block b = U.loadBlockFromFile(fileName);
-				if (b.lastBlockHash.equals(thisBlock)) {
-					candidates.add(b);
-					break;
-				}
-			} else break;
-		}
-
-		if (candidates.size() == 1) {
-			next = candidates.get(0);
-		} else if (candidates.size() > 1) {
-			final Random rand = new Random();
-			next = candidates.get(rand.nextInt(candidates.size()));
-		}
-
-		return next;
+		final BigInteger blockHash = C.sha(this);
+		if (B.blockExists(blockHash)) {
+			final Block next = B.getNextBlock(blockHash);
+			return next;
+		} else return null;
 	}
 }
 
@@ -203,8 +187,8 @@ class Transaction extends MyObject implements Serializable {
 
 	@Override
 	public String toString(final ChainInfo chain) {
-		final String strInputs = U.listToString(inputs, chain);
-		final String strOutputs = U.listToString(outputs, chain);
+		final String strInputs = B.listToString(inputs, chain);
+		final String strOutputs = B.listToString(outputs, chain);
 		String s = "{\"tx\":{";
 		if (inputs != null) {
 			s += "\"inputs\":" + strInputs + ",";

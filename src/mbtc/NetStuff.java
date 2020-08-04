@@ -1,6 +1,7 @@
 package mbtc;
 
 import java.io.*;
+import java.math.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
@@ -93,15 +94,33 @@ class N {
 						U.d(1, "NET: READ a BLOCK " + U.str(socketChannel));
 						final Block b = (Block) txOrBlock;
 						read = B.addBlock(b, socketChannel);
-						// if he sent block 1 to you, send block 2 to him (downloading blocks)
+
+						if (read) {
+							Main.startMining = false;
+							U.d(2, "INFO: miner off");
+							N.lastAction = System.currentTimeMillis();
+						}
+
+						// if he sent block 1 to you, send block 2 to him
 						final Block next = b.next();
-						if (next != null) socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+						if (next != null) {
+							socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+						}
 
 					} else if (txOrBlock instanceof Transaction) {
 						U.d(2, "NET: READ a TRANSACTION " + U.str(socketChannel));
 						read = B.addTx2MemPool((Transaction) txOrBlock);
 						if (read) N.toSend(socketChannel, U.serialize(txOrBlock));
 
+					} else if (txOrBlock instanceof BigInteger) {
+						U.d(2, "NET: Asking for Block after: " + txOrBlock + " - " + U.str(socketChannel));
+						final BigInteger blockHash = (BigInteger) txOrBlock;
+						if (B.blockExists(blockHash)) {
+							final Block next = B.getNextBlock(blockHash);
+							if (next != null) {
+								socketChannel.write(ByteBuffer.wrap(U.serialize(next)));
+							}
+						}
 					} else {
 						disconnect = true;
 					}
@@ -203,6 +222,10 @@ class N {
 			newChannel.configureBlocking(false);
 			p2pChannels.put(newChannel, new Buffer());
 		}
+	}
+
+	static void toSend(final byte[] data) {
+		toSend(null, data);
 	}
 
 	static void toSend(final SocketChannel from, final byte[] data) {
