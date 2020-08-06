@@ -77,6 +77,12 @@ class Chain extends MyObject implements Serializable {
 	}
 }
 
+class GiveMeABlockMessage implements Serializable {
+	private static final long serialVersionUID = 1L;
+	BigInteger blockHash; // what block?
+	boolean next = false; // this block (blockHash) or the block after this blockHash (next block)?
+}
+
 class Input extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	BigInteger txHash;

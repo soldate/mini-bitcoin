@@ -108,8 +108,11 @@ public class Main {
 			U.d(1, "INFO: Starting mining...");
 			startMining = true;
 
-		} else if (secondsFromLastRequest > 4) { // Ask for blocks
-			N.toSend(U.serialize(B.bestChain.blockHash));
+		} else if (secondsFromLastRequest > 4) { // Ask for more blocks
+			final GiveMeABlockMessage message = new GiveMeABlockMessage();
+			message.blockHash = B.bestChain.blockHash;
+			message.next = true;
+			N.toSend(U.serialize(message));
 			N.lastRequest = now;
 
 		} else if (!startMining) {

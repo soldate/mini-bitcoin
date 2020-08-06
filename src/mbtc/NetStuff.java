@@ -1,7 +1,6 @@
 package mbtc;
 
 import java.io.*;
-import java.math.*;
 import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
@@ -114,18 +113,18 @@ class N {
 						read = B.addTx2MemPool((Transaction) txOrBlock);
 						if (read) N.toSend(socketChannel, U.serialize(txOrBlock));
 
-					} else if (txOrBlock instanceof BigInteger) {
-						U.d(2, "NET: Somebody is asking for this block or for block after this: " + txOrBlock + " - "
-								+ U.str(socketChannel));
-
-						final BigInteger blockHash = (BigInteger) txOrBlock;
-						final Random random = new Random();
+					} else if (txOrBlock instanceof GiveMeABlockMessage) {
+						final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlock;
+						U.d(2, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
+								+ txOrBlock + " - " + U.str(socketChannel));
 
 						Block b = null;
-						if (B.blockExists(blockHash) && random.nextBoolean()) {
-							b = B.getNextBlock(blockHash);
-						} else {
-							b = B.getBlock(blockHash);
+						if (B.blockExists(message.blockHash)) {
+							if (message.next) {
+								b = B.getNextBlock(message.blockHash);
+							} else {
+								b = B.getBlock(message.blockHash);
+							}
 						}
 
 						if (b != null) {

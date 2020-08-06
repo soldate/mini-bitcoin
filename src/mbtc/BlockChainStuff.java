@@ -283,7 +283,8 @@ class B {
 							U.d(2, "INFO: new bestChain:" + newChain);
 							bestChain = newChain;
 						} else {
-							if (persistChain) U.d(2, "WARN: this new block is NOT to my best blockchain..");
+							if (persistChain)
+								U.d(2, "WARN: this new block is NOT to my best blockchain. chain: " + newChain);
 						}
 
 						if (persistBlock && persistChain) {
@@ -304,7 +305,10 @@ class B {
 		} else {
 			U.d(2, "WARN: Unknown 'last block' of this Block. Asking for block.");
 			if (from != null) {
-				from.write(ByteBuffer.wrap(U.serialize(block.lastBlockHash)));
+				final GiveMeABlockMessage message = new GiveMeABlockMessage();
+				message.blockHash = block.lastBlockHash;
+				message.next = false;
+				from.write(ByteBuffer.wrap(U.serialize(message)));
 			}
 			return false;
 		}
