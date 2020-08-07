@@ -9,7 +9,7 @@ class K {
 	static final String GENESIS_MSG = "The Economist - 2020-08-08 - The world is spending nowhere near enough on a coronavirus vaccine";
 	static final long START_TIME = 1596826825751L;// System.currentTimeMillis();
 	// "seed" for docker-compose network. replaced to localhost in local test. check NetStuff clientConfigAndConnect()
-	static String[] SEEDS = { "seed" };
+	static String[] SEEDS = { "64.227.25.70" };
 	// --------------------------------------------
 	static final long BLOCK_TIME = 10 * 60 * 1000; // 10 minutes
 	static final long REWARD = 50;
