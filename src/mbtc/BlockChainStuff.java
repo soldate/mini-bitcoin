@@ -146,12 +146,12 @@ class B {
 		newChain.chainWork = newChain.chainWork.add(newChain.target);
 		newChain.chainWork = newChain.chainWork.subtract(blockHash);
 
-		if (targetAdjustment(block, newChain) > 1) {
-			newChain.target = newChain.target.add(newChain.target.shiftRight(6));
-			U.d(2, "INFO: diff decrease 1.5%"); // 1.5625%
+		if (targetAdjustment(block, newChain) < 1) {
+			newChain.target = newChain.target.add(newChain.target.shiftRight(5));
+			U.d(2, "INFO: diff decrease 3.125%");
 		} else {
-			newChain.target = newChain.target.subtract(newChain.target.shiftRight(6));
-			U.d(2, "INFO: diff increase 1.5%"); // 1.5625%
+			newChain.target = newChain.target.subtract(newChain.target.shiftRight(5));
+			U.d(2, "INFO: diff increase 3.125%");
 		}
 		U.d(3, "INFO: new target: " + newChain.target.toString(16));
 
@@ -211,7 +211,8 @@ class B {
 		U.d(2, "INFO: block time: " + U.simpleDateFormat.format(new Date(block.time)));
 		U.d(2, "INFO: expected: "
 				+ U.simpleDateFormat.format(new Date((newChain.height * K.BLOCK_TIME) + K.START_TIME)));
-		return ((newChain.height * K.BLOCK_TIME) + K.START_TIME) / block.time;
+		U.d(2, "INFO: return: " + ((double) (newChain.height * K.BLOCK_TIME) + K.START_TIME) / block.time);
+		return ((double) (newChain.height * K.BLOCK_TIME) + K.START_TIME) / block.time;
 	}
 
 	// clean outputs (block inputs) and add new outputs (block outputs)
