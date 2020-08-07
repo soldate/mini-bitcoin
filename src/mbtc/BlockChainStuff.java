@@ -62,11 +62,28 @@ class B {
 	}
 
 	// add reward tx in block candidate
-	private static void createCoinbase(final Block candidate)
-			throws InvalidKeyException, SignatureException, IOException {
+	private static void createCoinbase(final Block candidate) throws InvalidKeyException, SignatureException,
+			IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final List<Output> outputs = new ArrayList<Output>();
-		outputs.add(myOutputReward());
+		outputs.add(myOutputReward(K.REWARD / 2));
+		outputs.add(devOutputReward(K.REWARD / 2));
 		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
+	}
+
+	private static Output devOutputReward(final long reward) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		final PublicKey devPK = C.getPublicKeyFromString(
+				"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE0AnDrbR6jIqPE1msiN9n2asUCSOxMufdytQQtfvlXjyZQi8DJ2YWEt51MC2JzQFnT7RmYiNW85qTs6HCAKofYw==");
+		final int devAddress = devPK.hashCode();
+		if (bestChain.address2PublicKey.containsKey(devAddress)) {
+			if (bestChain.address2PublicKey.get(devAddress).equals(devPK)) {
+				return new Output(U.int2BigInt(devAddress), reward);
+			} else {
+				throw new RuntimeException(
+						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
+			}
+		} else {
+			return new Output(new BigInteger(devPK.getEncoded()), reward);
+		}
 	}
 
 	private static List<Transaction> getFromMemPool() throws IOException {
@@ -118,17 +135,17 @@ class B {
 		return (Chain) U.loadObjectFromFile(fileName);
 	}
 
-	private static Output myOutputReward() {
+	private static Output myOutputReward(final long reward) {
 		final int myAddress = Main.me.getPublic().hashCode();
 		if (bestChain.address2PublicKey.containsKey(myAddress)) {
 			if (bestChain.address2PublicKey.get(myAddress).equals(Main.me.getPublic())) {
-				return new Output(U.int2BigInt(myAddress), K.REWARD);
+				return new Output(U.int2BigInt(myAddress), reward);
 			} else {
 				throw new RuntimeException(
 						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
 			}
 		} else {
-			return new Output(new BigInteger(Main.me.getPublic().getEncoded()), K.REWARD);
+			return new Output(new BigInteger(Main.me.getPublic().getEncoded()), reward);
 		}
 	}
 
@@ -201,6 +218,7 @@ class B {
 		long s = 0;
 		for (final Transaction tx : txs) {
 			for (final Output out : tx.outputs) {
+				if (out.value <= 0) return -1;
 				s += out.value;
 			}
 		}
@@ -283,7 +301,7 @@ class B {
 					final long sumOfInputs = sumOfInputs(chain, block.txs);
 					final long sumOfOutputs = sumOfOutputs(chain, block.txs);
 
-					if (sumOfOutputs == (sumOfInputs + K.REWARD)) {
+					if (sumOfOutputs == (sumOfInputs + K.REWARD) && sumOfInputs > 0) {
 
 						final Chain newChain = newChain(block, chain);
 
@@ -389,7 +407,8 @@ class B {
 		else return false;
 	}
 
-	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException {
+	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException,
+			NoSuchAlgorithmException, InvalidKeySpecException {
 		final Block candidate = new Block();
 		candidate.time = System.currentTimeMillis();
 		candidate.lastBlockHash = bestChain.blockHash;
