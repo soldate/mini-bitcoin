@@ -7,7 +7,7 @@ class K {
 	static int P2P_PORT = 10762;
 	static int RPC_PORT = 8080;
 	static final String GENESIS_MSG = "The Economist - 2020-08-08 - The world is spending nowhere near enough on a coronavirus vaccine";
-	static final long START_TIME = 1596764456922L;// System.currentTimeMillis();
+	static final long START_TIME = 1596826825751L;// System.currentTimeMillis();
 	// "seed" for docker-compose network. replaced to localhost in local test. check NetStuff clientConfigAndConnect()
 	static String[] SEEDS = { "seed" };
 	// --------------------------------------------

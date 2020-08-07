@@ -15,7 +15,6 @@ class B {
 	// my best blockchain (bigger chainWork = i will mine from this)
 	static Chain bestChain;
 
-	// TODO reject same address transaction. avoid flood
 	static List<Transaction> mempool = new ArrayList<Transaction>();
 
 	static {
