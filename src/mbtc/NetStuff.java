@@ -60,7 +60,7 @@ class N {
 					p2pChannels.put(socketChannel, new Buffer());
 					U.d(1, "NET: i am CLIENT: " + socketChannel.getLocalAddress() + " of SERVER "
 							+ socketChannel.getRemoteAddress());
-				} catch (final UnresolvedAddressException e) {
+				} catch (ConnectException | UnresolvedAddressException e) {
 					U.d(2, "WARN: can NOT connect to SERVER " + s);
 				}
 			}

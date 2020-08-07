@@ -300,7 +300,7 @@ class B {
 					final long sumOfInputs = sumOfInputs(chain, block.txs);
 					final long sumOfOutputs = sumOfOutputs(chain, block.txs);
 
-					if (sumOfOutputs == (sumOfInputs + K.REWARD) && sumOfInputs > 0) {
+					if (sumOfOutputs == (sumOfInputs + K.REWARD) && sumOfOutputs > 0) {
 
 						final Chain newChain = newChain(block, chain);
 
