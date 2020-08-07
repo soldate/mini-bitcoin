@@ -19,7 +19,15 @@ and (for developers)
 * Eclipse IDE (recommended)
 * docker-compose (recommended)
 
-## How To GO - Users and Developers
+## How To GO - Users
+
+```
+docker pull soldate/mbtc
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm soldate/mbtc
+```
+
+## How To GO - Developers
+
 For the first time, do
 
 ```
