@@ -7,7 +7,7 @@ class K {
 	static int P2P_PORT = 10762;
 	static int RPC_PORT = 8080;
 	static final String GENESIS_MSG = "The Economist - 2020-08-08 - The world is spending nowhere near enough on a coronavirus vaccine";
-	static final long START_TIME = 1596826825751L;// System.currentTimeMillis();
+	static final long START_TIME = 1596832794701L;// System.currentTimeMillis();
 	// "seed" for docker-compose network. replaced to localhost in local test. check NetStuff clientConfigAndConnect()
 	static String[] SEEDS = { "64.227.25.70" };
 	// --------------------------------------------
@@ -27,7 +27,7 @@ class K {
 	// target is how difficulty is manipulated. find hash starting with bits 0010 (=2) is harder than 0100 (=4)
 	// In another words, smaller target means more difficult to find the block (valid hash)
 	// It is in hexa. Each 0 here means 4 zero bits.
-	static final String MINIBTC_TARGET = "00000000ffff0000000000000000000000000000000000000000000000000000";
+	static final String MINIBTC_TARGET = "0000000ffff00000000000000000000000000000000000000000000000000000";
 	static final String BITCOIN_TARGET = "00000000ffff0000000000000000000000000000000000000000000000000000";
 
 	static {
