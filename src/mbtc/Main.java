@@ -132,7 +132,7 @@ public class Main {
 		U.w("Here is your command list:");
 		U.w("--------------- MENU ----------------");
 		U.w("/menu - Show this.");
-		U.w("/log number - log (0, 1, 2 or 3. very verbose).");
+		U.w("/log number - log (1, 2 or 3. 3 = very verbose).");
 		U.w("/quit - Exit. :-(");
 		U.w("-------------------------------------");
 	}

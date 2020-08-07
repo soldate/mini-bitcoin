@@ -115,7 +115,7 @@ class N {
 
 					} else if (txOrBlock instanceof GiveMeABlockMessage) {
 						final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlock;
-						U.d(2, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
+						U.d(3, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
 								+ txOrBlock + " - " + U.str(socketChannel));
 
 						Block b = null;
@@ -165,7 +165,7 @@ class N {
 
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(ToSend.data));
-			U.d(2, "NET: WROTE " + qty + " bytes " + U.str(channel));
+			U.d(3, "NET: WROTE " + qty + " bytes " + U.str(channel));
 		} catch (final IOException e) {
 			U.d(2, "NET: Other side DISCONNECT.. closing channel..");
 			disconnect(channel);

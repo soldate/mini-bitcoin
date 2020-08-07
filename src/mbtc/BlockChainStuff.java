@@ -15,6 +15,7 @@ class B {
 	// my best blockchain (bigger chainWork = i will mine from this)
 	static Chain bestChain;
 
+	// TODO reject same address transaction. avoid flood
 	static List<Transaction> mempool = new ArrayList<Transaction>();
 
 	static {
@@ -23,7 +24,7 @@ class B {
 		bestChain.height = 0;
 		bestChain.chainWork = BigInteger.ZERO;
 		bestChain.blockHash = genesisHash;
-		bestChain.target = new BigInteger(K.INITIAL_TARGET, 16);
+		bestChain.target = new BigInteger(K.MINIBTC_TARGET, 16);
 		bestChain.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder(K.UTXO_FOLDER);
 		saveChain(bestChain);
@@ -74,22 +75,33 @@ class B {
 		int totalSize = 0;
 		final List<Input> allInputs = new ArrayList<Input>();
 		List<Input> txInputs = null;
-		for (int i = 0; i < mempool.size(); i++) {
-			txInputs = isValidTx(mempool.get(i));
+		final List<Transaction> toRemove = new ArrayList<Transaction>();
+
+		for (final Transaction tx : mempool) {
+			txInputs = isValidTx(tx);
 			if (txInputs != null && Collections.disjoint(allInputs, txInputs)) {
 				allInputs.addAll(txInputs);
-				txBytesSize = U.serialize(mempool.get(i)).length;
+				txBytesSize = U.serialize(tx).length;
 				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
-					txs.add(mempool.get(i));
+					txs.add(tx);
 					totalSize += txBytesSize;
 				}
+			} else { // inputs already used
+				toRemove.add(tx);
 			}
 		}
+
+		for (final Transaction t : toRemove) {
+			mempool.remove(t);
+		}
+
 		return txs;
 	}
 
 	// return null = return false
 	private static List<Input> isValidTx(final Transaction tx) {
+		if (tx.message != null && tx.message.length() > 140) return null;
+
 		List<Input> inputList = null;
 		for (final Input in : tx.inputs) {
 			final Transaction lastTx = bestChain.UTXO.get(in.txHash);
@@ -196,6 +208,9 @@ class B {
 	}
 
 	private static double targetAdjustment(final Block block, final Chain newChain) {
+		U.d(2, "INFO: block time: " + U.simpleDateFormat.format(new Date(block.time)));
+		U.d(2, "INFO: expected: "
+				+ U.simpleDateFormat.format(new Date((newChain.height * K.BLOCK_TIME) + K.START_TIME)));
 		return ((newChain.height * K.BLOCK_TIME) + K.START_TIME) / block.time;
 	}
 
@@ -232,8 +247,6 @@ class B {
 			final SocketChannel from) throws InvalidKeyException, SignatureException, IOException,
 			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 
-		// TODO validate tx message size
-
 		final BigInteger blockHash = C.sha(block);
 		if (blockExists(blockHash)) {
 			U.d(2, "INFO: we already have this block");
@@ -256,8 +269,12 @@ class B {
 			if (chain.target.compareTo(blockHash) > 0) {
 				if (block.txs != null) { // null == not even coinbase tx??
 					for (final Transaction tx : block.txs) {
+						if (tx.message != null && tx.message.length() > 140) {
+							U.d(2, "WARN: INVALID BLOCK. Message too big.");
+							return false;
+						}
 						if (!checkInputsTxSignature(chain, tx)) {
-							U.d(2, "WARN: INVALID BLOCK. Wrong txs signature");
+							U.d(2, "WARN: INVALID BLOCK. Wrong txs signature.");
 							return false;
 						}
 					}
@@ -328,10 +345,33 @@ class B {
 	static boolean addTx2MemPool(final Transaction tx) {
 		U.d(3, "INFO: try add tx to mempool:" + tx);
 		boolean success = false;
+		boolean flood = false;
 
 		if (!mempool.contains(tx) && isValidTx(tx) != null) {
-			mempool.add(tx);
-			success = true;
+
+			// avoid flood = no tx fee = only one tx in mempool per account maximum
+			final List<BigInteger> users = new ArrayList<BigInteger>();
+			for (final Transaction t : mempool) {
+				for (final Input in : t.inputs) {
+					final Transaction lastTx = bestChain.UTXO.get(in.txHash);
+					final Output out = lastTx.outputs.get(in.outputIndex);
+					users.add(out.addressOrPublicKey);
+				}
+			}
+
+			for (final Input in : tx.inputs) {
+				final Transaction lastTx = bestChain.UTXO.get(in.txHash);
+				final Output out = lastTx.outputs.get(in.outputIndex);
+				if (users.contains(out.addressOrPublicKey)) {
+					flood = true;
+					break;
+				}
+			}
+
+			if (!flood) {
+				mempool.add(tx);
+				success = true;
+			}
 		}
 
 		if (success) {
