@@ -83,7 +83,7 @@ public class Main {
 
 		while (true) {
 			// Did user write some command?
-			if (ttyReader.ready()) {
+			if (ttyReader.ready() && !N.urgent()) {
 				userCommandHandler(ttyReader.readLine());
 			}
 
@@ -91,12 +91,12 @@ public class Main {
 			N.p2pHandler();
 
 			// Let's mine a little
-			if (startMining) {
+			if (startMining && !N.urgent()) {
 				mineALittleBit();
 			}
 
 			// timer
-			shouldIDoSomethingNow(System.currentTimeMillis());
+			if (!N.urgent()) shouldIDoSomethingNow(System.currentTimeMillis());
 		}
 	}
 
@@ -109,9 +109,8 @@ public class Main {
 			startMining = true;
 
 		} else if (secondsFromLastRequest > 4) { // Ask for more blocks
-			final GiveMeABlockMessage message = new GiveMeABlockMessage();
-			message.blockHash = B.bestChain.blockHash;
-			message.next = true;
+			final GiveMeABlockMessage message = new GiveMeABlockMessage(B.bestChain.blockHash, true);
+			U.d(2, "Ask for block after this: " + message.blockHash);
 			N.toSend(U.serialize(message));
 			N.lastRequest = now;
 

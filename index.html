@@ -31,23 +31,23 @@ ex: /send 5 MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEdMkLaDHJ0H2EOBFbG2wH3IoHRrt0AsDtHZFq
 <br/>
 <b>== Blockchain data ==</b>
 <br/>
-<a href="http://localhost:8080/blocks">/blocks</a><br/>
-<a href="http://localhost:8080/info">/info</a><br/>
-<a href="http://localhost:8080/users">/users</a><br/>
+<a href="/blocks">/blocks</a><br/>
+<a href="/info">/info</a><br/>
+<a href="/users">/users</a><br/>
 ex: /block 000000000001_1.block<br/>
 /block <input type="text" id="block" name="block"> <button onclick="block()">see block</button><br/>
 <br/>
 <b>== Admin ==</b>
 <br/>
-<a href="http://localhost:8080/utxo">/utxo</a><br/>
-<a href="http://localhost:8080/mempool">/mempool</a><br/>
+<a href="/utxo">/utxo</a><br/>
+<a href="/mempool">/mempool</a><br/>
 <br/>
 <script>
 function send() {
-	window.location.href = "http://localhost:8080/send " + document.getElementById("val").value + " " + document.getElementById("toAddress").value + " " + document.getElementById("msg").value;
+	window.location.href = "/send " + document.getElementById("val").value + " " + document.getElementById("toAddress").value + " " + document.getElementById("msg").value;
 }
 function block() {
-	window.location.href = "http://localhost:8080/block " + document.getElementById("block").value;
+	window.location.href = "/block " + document.getElementById("block").value;
 }
 </script>
 </body>

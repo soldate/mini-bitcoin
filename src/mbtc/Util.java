@@ -3,7 +3,6 @@ package mbtc;
 import java.io.*;
 import java.math.*;
 import java.nio.*;
-import java.nio.channels.*;
 import java.nio.file.*;
 import java.security.*;
 import java.text.*;
@@ -116,7 +115,7 @@ class U {
 		Thread.sleep(millis);
 	}
 
-	static String str(final SocketChannel channel) throws IOException {
+	static String str(final SocketChannelWrapper channel) throws IOException {
 		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
 	}
 

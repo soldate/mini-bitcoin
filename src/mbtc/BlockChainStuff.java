@@ -3,7 +3,6 @@ package mbtc;
 import java.io.*;
 import java.math.*;
 import java.nio.*;
-import java.nio.channels.*;
 import java.nio.file.*;
 import java.security.*;
 import java.security.spec.*;
@@ -262,7 +261,7 @@ class B {
 	}
 
 	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistChain,
-			final SocketChannel from) throws InvalidKeyException, SignatureException, IOException,
+			final SocketChannelWrapper from) throws InvalidKeyException, SignatureException, IOException,
 			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
 
 		final BigInteger blockHash = C.sha(block);
@@ -323,7 +322,7 @@ class B {
 						}
 
 						if (persistBlock && persistChain) {
-							N.toSend(from, U.serialize(block));
+							N.toSend(from, U.serialize(block), true);
 						}
 					} else {
 						U.d(2, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
@@ -340,19 +339,18 @@ class B {
 		} else {
 			U.d(2, "WARN: Unknown 'last block' of this Block. Asking for block.");
 			if (from != null) {
-				final GiveMeABlockMessage message = new GiveMeABlockMessage();
-				message.blockHash = block.lastBlockHash;
-				message.next = false;
-				from.write(ByteBuffer.wrap(U.serialize(message)));
+				final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
+				from.writeNow(ByteBuffer.wrap(U.serialize(message)));
+				N.lastRequest = System.currentTimeMillis();
 			}
 			return false;
 		}
 		return true;
 	}
 
-	static boolean addBlock(final Block block, final SocketChannel from) throws InvalidKeyException, SignatureException,
-			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		return addBlock(block, true, true, from);
+	static boolean addBlock(final Block block, final SocketChannelWrapper channel) throws InvalidKeyException,
+			SignatureException, ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+		return addBlock(block, true, true, channel);
 	}
 
 	static boolean addChain(final Block block) throws InvalidKeyException, SignatureException, ClassNotFoundException,

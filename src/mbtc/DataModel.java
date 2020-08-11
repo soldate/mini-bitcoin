@@ -81,6 +81,12 @@ class GiveMeABlockMessage implements Serializable {
 	private static final long serialVersionUID = 1L;
 	BigInteger blockHash; // what block?
 	boolean next = false; // this block (blockHash) or the block after this blockHash (next block)?
+
+	public GiveMeABlockMessage(final BigInteger blockHash, final boolean next) {
+		super();
+		this.blockHash = blockHash;
+		this.next = next;
+	}
 }
 
 class Input extends MyObject implements Serializable {

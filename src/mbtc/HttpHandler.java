@@ -90,7 +90,7 @@ class HttpHandler {
 					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs, message);
 					response = tx.toString();
-					N.toSend(U.serialize(tx));
+					N.toSend(U.serialize(tx), true);
 				}
 				break;
 
