@@ -124,6 +124,9 @@ class N {
 			} else {
 				disconnect = true;
 			}
+		} catch (final StreamCorruptedException e) {
+			// do nothing
+			U.d(2, "WARN: strange data " + e.getMessage());
 		} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
 				| InvalidKeySpecException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
