@@ -195,11 +195,13 @@ class N {
 			U.d(3, "INFO: ...no new connection..handle the open channels..");
 
 			// clear closed channels from list
+			final List<SocketChannelWrapper> toRemove = new ArrayList<SocketChannelWrapper>();
 			for (final SocketChannelWrapper channel : p2pChannels) {
 				if (!channel.isOpen() || channel.isBlocking()) {
-					p2pChannels.remove(channel);
+					toRemove.add(channel);
 				}
 			}
+			p2pChannels.removeAll(toRemove);
 
 			// if i have nothing to send, read all channels
 			for (final SocketChannelWrapper channel : p2pChannels) {
@@ -211,8 +213,8 @@ class N {
 				for (final SocketChannelWrapper channel : p2pChannels) {
 					sendData(channel);
 				}
-				// i just send a block that i mine. yeah! sleep a little.
-				// wait your block spread before send more data.
+				// i just sent a block that i mine. good! sleep a little.
+				// wait your block spread before send more data, just in case.
 				if (ToSend.urgent && ToSend.dataFrom == null) {
 					U.sleep();
 				}
