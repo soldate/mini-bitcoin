@@ -23,7 +23,7 @@ and (for developers)
 
 ```
 docker pull soldate/mbtc
-docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm soldate/mbtc
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data/keypair:/tmp/data/keypair" --rm soldate/mbtc
 ```
 
 ## How To GO - Developers
@@ -40,7 +40,7 @@ Then
 cd mini-bitcoin/
 git pull
 docker build -t mbtc .
-docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data/keypair:/tmp/data/keypair" --rm mbtc
 ```
 
 Go to [http://localhost:8080](http://localhost:8080)
