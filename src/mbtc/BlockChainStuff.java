@@ -291,6 +291,15 @@ class B {
 			return false;
 		}
 
+		if (block instanceof Block_v2) {
+			final Block_v2 b_v2 = (Block_v2) block;
+			final BigInteger txsHash = C.sha(b_v2.txs);
+			if (!txsHash.equals(b_v2.txsHash)) {
+				U.d(2, "WARN: block.txsHash != sha(block.txs)");
+				return false;
+			}
+		}
+
 		final Chain chain = block.getChain();
 
 		// if we know the chain of this block
