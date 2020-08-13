@@ -17,15 +17,22 @@ class B {
 	static List<Transaction> mempool = new ArrayList<Transaction>();
 
 	static {
-		final BigInteger genesisHash = new BigInteger(1, C.sha256.digest(K.GENESIS_MSG.getBytes()));
-		bestChain = new Chain();
-		bestChain.height = 0;
-		bestChain.chainWork = BigInteger.ZERO;
-		bestChain.blockHash = genesisHash;
-		bestChain.target = new BigInteger(K.MINIBTC_TARGET, 16);
-		bestChain.UTXO = new HashMap<BigInteger, Transaction>();
-		U.cleanFolder(K.UTXO_FOLDER);
-		saveNewChain(bestChain);
+		BigInteger genesisHash;
+		try {
+			genesisHash = C.sha(K.GENESIS_MSG);
+			bestChain = new Chain();
+			bestChain.height = 0;
+			bestChain.chainWork = BigInteger.ZERO;
+			bestChain.blockHash = genesisHash;
+			bestChain.target = new BigInteger(K.MINIBTC_TARGET, 16);
+			bestChain.UTXO = new HashMap<BigInteger, Transaction>();
+			U.cleanFolder(K.UTXO_FOLDER);
+			saveNewChain(bestChain);
+
+		} catch (final IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 
 	private static void addressMapUpdate(final Chain newChain, final Block block)
@@ -510,8 +517,7 @@ class B {
 		if (candidates.size() == 1) {
 			next = candidates.get(0);
 		} else if (candidates.size() > 1) {
-			final Random rand = new Random();
-			next = candidates.get(rand.nextInt(candidates.size()));
+			next = candidates.get(U.random.nextInt(candidates.size()));
 		}
 
 		return next;

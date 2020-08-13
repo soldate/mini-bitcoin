@@ -81,7 +81,7 @@ class N {
 					channel.getBuffer().clear();
 
 					if (txOrBlockOrMsg instanceof Block) {
-						U.d(1, "NET: READ a BLOCK " + U.str(channel));
+						U.d(1, "NET: READ a BLOCK " + channel);
 						final Block block = (Block) txOrBlockOrMsg;
 						read = B.addBlock(block, channel);
 
@@ -92,14 +92,14 @@ class N {
 						}
 
 					} else if (txOrBlockOrMsg instanceof Transaction) {
-						U.d(1, "NET: READ a TRANSACTION " + U.str(channel));
+						U.d(1, "NET: READ a TRANSACTION " + channel);
 						read = B.addTx2MemPool((Transaction) txOrBlockOrMsg);
 						if (read) N.toSend(channel, U.serialize(txOrBlockOrMsg), true);
 
 					} else if (txOrBlockOrMsg instanceof GiveMeABlockMessage) {
 						final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlockOrMsg;
 						U.d(3, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
-								+ message.blockHash + " - " + U.str(channel));
+								+ message.blockHash + " - " + channel);
 
 						Block b = null;
 						if (B.blockExists(message.blockHash)) {
@@ -112,19 +112,22 @@ class N {
 							}
 						}
 
-						if (b != null) {
-							U.d(3, "NET: WRITE block");
-							channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
-						} else {
+						if (b == null) {
+							b = B.getBlock(B.bestChain.blockHash);
+							final int n = U.random.nextInt(5) + 1;
+							for (int i = 0; i < n; i++) b = b.previous();
 							U.d(3, "NET: block to response is null");
 						}
+
+						U.d(3, "NET: block response");
+						channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
 
 					} else {
 						disconnect = true;
 					}
 				} catch (final StreamCorruptedException e) {
 					// do nothing
-					U.d(3, "WARN: is data not ready? " + qty + " bytes: " + U.str(channel));
+					U.d(3, "WARN: is data not ready? " + qty + " bytes: " + channel);
 					U.d(3, "WARN: remaining " + channel.getBuffer().remaining());
 					U.d(3, "WARN: capacity " + channel.getBuffer().capacity());
 
@@ -136,12 +139,12 @@ class N {
 			}
 
 		} else {
-			U.d(1, "WARN: Are we under DoS attack? disconnecting " + U.str(channel));
+			U.d(1, "WARN: Are we under DoS attack? disconnecting " + channel);
 			disconnect = true;
 		}
 
 		if (disconnect) {
-			U.d(1, "WARN: disconnecting " + U.str(channel));
+			U.d(1, "WARN: disconnecting " + channel);
 			channel.close();
 		}
 
@@ -158,7 +161,7 @@ class N {
 
 			int qty = 0;
 			qty = channel.write(ByteBuffer.wrap(ToSend.data));
-			if (qty != -1) U.d(2, "NET: WROTE " + qty + " bytes " + U.str(channel));
+			if (qty != -1) U.d(2, "NET: WROTE " + qty + " bytes " + channel);
 
 		} catch (final IOException e) {
 			U.d(2, "NET: Other side DISCONNECT.. closing channel..");
@@ -311,7 +314,11 @@ class SocketChannelWrapper {
 
 	@Override
 	public String toString() {
-		return socketChannel.toString();
+		try {
+			return socketChannel.getLocalAddress() + " -> " + socketChannel.getRemoteAddress();
+		} catch (final IOException e) {
+			return "ERROR: socketChannel problem: " + e.getMessage();
+		}
 	}
 
 	public int write(final ByteBuffer buffer) throws IOException {

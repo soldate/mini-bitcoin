@@ -10,9 +10,9 @@ import java.util.*;
 // C = Crypto
 class C {
 
-	static Signature ecdsa;
-	static MessageDigest sha256;
-	static final String SHA_ALGO = "SHA256withECDSA";
+	private static Signature ecdsa;
+	private static MessageDigest sha256;
+	private static final String SHA_ALGO = "SHA256withECDSA";
 
 	static {
 		try {
@@ -153,6 +153,8 @@ class C {
 			b_v2.txs = null;
 			hash = new BigInteger(1, sha256.digest(U.serialize(o)));
 			b_v2.txs = txs;
+		} else if (o instanceof String) {
+			hash = new BigInteger(1, sha256.digest(o.toString().getBytes()));
 		} else {
 			hash = new BigInteger(1, sha256.digest(U.serialize(o)));
 		}

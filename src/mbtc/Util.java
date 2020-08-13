@@ -111,10 +111,6 @@ class U {
 		Thread.sleep(millis);
 	}
 
-	static String str(final SocketChannelWrapper channel) throws IOException {
-		return channel.getLocalAddress() + " -> " + channel.getRemoteAddress();
-	}
-
 	static void w(final Object o) {
 		System.out.println(o.toString());
 	}
