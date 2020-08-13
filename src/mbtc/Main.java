@@ -58,7 +58,7 @@ public class Main {
 		final BigInteger target = B.bestChain.target;
 
 		U.d(3, "INFO: mining...");
-		for (long i = l; i < (l + K.MINE_ROUND); i++) {
+		for (long i = l; (i < (l + K.MINE_ROUND) && !N.urgent()); i++) {
 			candidate.nonce = i;
 			final BigInteger candidateHash = C.sha(candidate);
 			if (target.compareTo(candidateHash) > 0) {
@@ -70,7 +70,7 @@ public class Main {
 
 		if (iFoundIt) {
 			B.addBlock(candidate, null);
-			if (K.DEBUG_MODE) U.sleep(); // wait others (to increase chain split chance)
+			// if (K.DEBUG_MODE) U.sleep(); // wait others (to increase chain split chance)
 		}
 
 	}
@@ -90,17 +90,18 @@ public class Main {
 			// Any network message to send or receive?
 			N.p2pHandler();
 
+			// timer
+			if (!N.urgent()) shouldIDoSomethingNow();
+
 			// Let's mine a little
 			if (startMining && !N.urgent()) {
 				mineALittleBit();
 			}
-
-			// timer
-			if (!N.urgent()) shouldIDoSomethingNow(System.currentTimeMillis());
 		}
 	}
 
-	private static void shouldIDoSomethingNow(final long now) throws IOException, InterruptedException {
+	private static void shouldIDoSomethingNow() throws IOException, InterruptedException {
+		final long now = System.currentTimeMillis();
 		final long secondsFromLastBlock = (now - N.lastAddBlock) / 1000;
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 
@@ -112,7 +113,6 @@ public class Main {
 			final GiveMeABlockMessage message = new GiveMeABlockMessage(B.bestChain.blockHash, true);
 			U.d(2, "Ask for block after this: " + message.blockHash);
 			N.toSend(U.serialize(message));
-			N.lastRequest = now;
 
 		} else if (!startMining) {
 			U.d(3, "INFO: sleeping...");
@@ -155,6 +155,9 @@ public class Main {
 
 			case "/quit":
 				U.w("------ Thanks! See you! ------");
+				for (final SocketChannelWrapper channel : N.p2pChannels) {
+					channel.close();
+				}
 				System.exit(0);
 				break;
 
@@ -165,7 +168,7 @@ public class Main {
 				break;
 
 			}
-		} catch (final NumberFormatException e) {
+		} catch (final NumberFormatException | IOException e) {
 			U.w("****** COMMAND ERROR ******");
 			U.w("ERROR: " + e.getMessage());
 			U.w("***************************");

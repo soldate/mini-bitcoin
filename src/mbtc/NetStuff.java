@@ -21,7 +21,6 @@ class N {
 	static ServerSocketChannel serverSC;
 	static long lastAddBlock = System.currentTimeMillis();
 	static long lastRequest = System.currentTimeMillis();
-	static ByteBuffer p2pReadBuffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	static List<SocketChannelWrapper> p2pChannels = new ArrayList<SocketChannelWrapper>();
 
 	private static void clientConfigAndConnect() throws IOException {
@@ -70,69 +69,75 @@ class N {
 		boolean disconnect = false;
 		boolean read = false;
 
-		try {
-			if (channel.read(p2pReadBuffer) <= 0) return false;
-			final Object txOrBlockOrMsg = U.deserialize(p2pReadBuffer.array());
+		if (channel.getBuffer().remaining() > 0) {
 
-			if (txOrBlockOrMsg instanceof Block) {
-				U.d(1, "NET: READ a BLOCK " + U.str(channel));
-				final Block block = (Block) txOrBlockOrMsg;
-				read = B.addBlock(block, channel);
-
-				if (read) {
-					N.lastAddBlock = System.currentTimeMillis();
-					N.lastRequest = System.currentTimeMillis();
-					final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
-					channel.writeNow(ByteBuffer.wrap(U.serialize(message)));
-
-				} else {
-					// if he sent block 1 to you, send block 2 to him
-					final Block next = block.next();
-					if (next != null) {
-						channel.writeNow(ByteBuffer.wrap(U.serialize(next)));
-					}
-				}
-
-			} else if (txOrBlockOrMsg instanceof Transaction) {
-				U.d(2, "NET: READ a TRANSACTION " + U.str(channel));
-				read = B.addTx2MemPool((Transaction) txOrBlockOrMsg);
-				if (read) N.toSend(channel, U.serialize(txOrBlockOrMsg), true);
-
-			} else if (txOrBlockOrMsg instanceof GiveMeABlockMessage) {
-				final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlockOrMsg;
-				U.d(2, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
-						+ message.blockHash + " - " + U.str(channel));
-
-				Block b = null;
-				if (B.blockExists(message.blockHash)) {
-					if (message.next) {
-						U.d(2, "NET: next block:" + message.blockHash);
-						b = B.getNextBlock(message.blockHash);
-					} else {
-						U.d(2, "NET: exactly block:" + message.blockHash);
-						b = B.getBlock(message.blockHash);
-					}
-				}
-
-				if (b != null) {
-					U.d(2, "NET: WRITE block");
-					channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
-				} else {
-					U.d(2, "NET: block to response is null");
-				}
+			final int qty = channel.read();
+			if (qty <= 0) {
+				U.d(3, "INFO: nothing to be read");
 
 			} else {
-				disconnect = true;
+				try {
+					final Object txOrBlockOrMsg = U.deserialize(channel.getBuffer().array());
+					channel.getBuffer().clear();
+
+					if (txOrBlockOrMsg instanceof Block) {
+						U.d(1, "NET: READ a BLOCK " + U.str(channel));
+						final Block block = (Block) txOrBlockOrMsg;
+						read = B.addBlock(block, channel);
+
+						if (read) {
+							N.lastAddBlock = System.currentTimeMillis(); /* avoid start mining. sync */
+							N.lastRequest = System.currentTimeMillis();
+							N.toSend(channel, U.serialize(block), true);
+						}
+
+					} else if (txOrBlockOrMsg instanceof Transaction) {
+						U.d(1, "NET: READ a TRANSACTION " + U.str(channel));
+						read = B.addTx2MemPool((Transaction) txOrBlockOrMsg);
+						if (read) N.toSend(channel, U.serialize(txOrBlockOrMsg), true);
+
+					} else if (txOrBlockOrMsg instanceof GiveMeABlockMessage) {
+						final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlockOrMsg;
+						U.d(3, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
+								+ message.blockHash + " - " + U.str(channel));
+
+						Block b = null;
+						if (B.blockExists(message.blockHash)) {
+							if (message.next) {
+								U.d(3, "NET: next block:" + message.blockHash);
+								b = B.getNextBlock(message.blockHash);
+							} else {
+								U.d(3, "NET: exactly block:" + message.blockHash);
+								b = B.getBlock(message.blockHash);
+							}
+						}
+
+						if (b != null) {
+							U.d(3, "NET: WRITE block");
+							channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
+						} else {
+							U.d(3, "NET: block to response is null");
+						}
+
+					} else {
+						disconnect = true;
+					}
+				} catch (final StreamCorruptedException e) {
+					// do nothing
+					U.d(3, "WARN: is data not ready? " + qty + " bytes: " + U.str(channel));
+					U.d(3, "WARN: remaining " + channel.getBuffer().remaining());
+					U.d(3, "WARN: capacity " + channel.getBuffer().capacity());
+
+				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
+						| InvalidKeySpecException | NoSuchAlgorithmException | InterruptedException e) {
+					e.printStackTrace();
+					disconnect = true;
+				}
 			}
-		} catch (final StreamCorruptedException e) {
-			// do nothing
-			U.d(2, "WARN: strange data " + e.getMessage());
-		} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
-				| InvalidKeySpecException | NoSuchAlgorithmException e) {
-			e.printStackTrace();
+
+		} else {
+			U.d(1, "WARN: Are we under DoS attack? disconnecting " + U.str(channel));
 			disconnect = true;
-		} finally {
-			p2pReadBuffer.clear();
 		}
 
 		if (disconnect) {
@@ -147,17 +152,14 @@ class N {
 		try {
 			// do NOT send back the same data you received
 			if (channel.equals(ToSend.dataFrom)) {
-				U.d(3, "WARN: do NOT send data back to origin");
+				U.d(2, "WARN: do NOT send data back to origin");
 				return;
 			}
 
 			int qty = 0;
-			if (ToSend.urgent) {
-				qty = channel.writeNow(ByteBuffer.wrap(ToSend.data));
-			} else {
-				qty = channel.write(ByteBuffer.wrap(ToSend.data));
-			}
-			if (qty != -1) U.d(3, "NET: WROTE " + qty + " bytes " + U.str(channel));
+			qty = channel.write(ByteBuffer.wrap(ToSend.data));
+			if (qty != -1) U.d(2, "NET: WROTE " + qty + " bytes " + U.str(channel));
+
 		} catch (final IOException e) {
 			U.d(2, "NET: Other side DISCONNECT.. closing channel..");
 			channel.close();
@@ -206,22 +208,17 @@ class N {
 			}
 			p2pChannels.removeAll(toRemove);
 
-			// if i have nothing to send, read all channels
-			for (final SocketChannelWrapper channel : p2pChannels) {
-				if (readData(channel) && ToSend.data == null) break;
-			}
-
 			// if tx or block was read or mined, send that to all
 			if (ToSend.data != null) {
 				for (final SocketChannelWrapper channel : p2pChannels) {
 					sendData(channel);
 				}
-				// i just sent a block that i mine. good! sleep a little.
-				// wait your block spread before send more data, just in case.
-				if (ToSend.urgent && ToSend.dataFrom == null) {
-					U.sleep();
-				}
 				cleanDataToSend();
+			}
+
+			// if i have nothing to send, read all channels
+			for (final SocketChannelWrapper channel : p2pChannels) {
+				if (readData(channel) && ToSend.data == null) break;
 			}
 
 		} else {
@@ -231,22 +228,35 @@ class N {
 		}
 	}
 
-	static void toSend(final byte[] data) {
+	static void toSend(final byte[] data) throws InterruptedException {
 		toSend(null, data);
 	}
 
-	static void toSend(final byte[] data, final boolean urgent) {
+	static void toSend(final byte[] data, final boolean urgent) throws InterruptedException {
 		toSend(null, data, urgent);
 	}
 
-	static void toSend(final SocketChannelWrapper from, final byte[] data) {
+	static void toSend(final SocketChannelWrapper from, final byte[] data) throws InterruptedException {
 		toSend(from, data, false);
 	}
 
-	static void toSend(final SocketChannelWrapper from, final byte[] data, final boolean urgent) {
+	static synchronized void toSend(final SocketChannelWrapper from, final byte[] data, final boolean urgent)
+			throws InterruptedException {
+		final long now = System.currentTimeMillis();
+		final long secondsFromLastRequest = (now - lastRequest) / 1000;
+
+		if (ToSend.urgent && 2 > secondsFromLastRequest) {
+			lastRequest = now;
+			Thread.sleep(1000);
+
+		} else if (ToSend.urgent && !urgent) {
+			return;
+		}
+
 		ToSend.dataFrom = from;
 		ToSend.data = data;
 		ToSend.urgent = urgent;
+		lastRequest = now;
 	}
 
 	static boolean urgent() {
@@ -258,7 +268,9 @@ class N {
 // only write again if more than 4s passed
 class SocketChannelWrapper {
 	private final SocketChannel socketChannel;
+
 	private long lastWriteTime;
+	private final ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 
 	public SocketChannelWrapper(final SocketChannel socketChannel) {
 		this.socketChannel = socketChannel;
@@ -267,6 +279,10 @@ class SocketChannelWrapper {
 
 	public void close() throws IOException {
 		socketChannel.close();
+	}
+
+	public ByteBuffer getBuffer() {
+		return buffer;
 	}
 
 	public SocketAddress getLocalAddress() throws IOException {
@@ -285,22 +301,34 @@ class SocketChannelWrapper {
 		return socketChannel.isOpen();
 	}
 
-	public int read(final ByteBuffer p2pReadBuffer) throws IOException {
-		return socketChannel.read(p2pReadBuffer);
+	public int read() throws IOException {
+		return socketChannel.read(buffer);
+	}
+
+	@Override
+	public String toString() {
+		return socketChannel.toString();
 	}
 
 	public int write(final ByteBuffer buffer) throws IOException {
-		final long now = System.currentTimeMillis();
-		final long diff = (now - lastWriteTime) / 1000;
+		if (N.urgent()) {
+			return writeNow(buffer);
+		} else {
+			final long now = System.currentTimeMillis();
+			final long diff = (now - lastWriteTime) / 1000;
 
-		if (diff >= 4 || lastWriteTime == 0) {
-			lastWriteTime = now;
-			return socketChannel.write(buffer);
-		} else return -1;
+			if (diff >= 4 || lastWriteTime == 0) {
+				lastWriteTime = now;
+				N.lastRequest = now;
+				return socketChannel.write(buffer);
+			} else return -1;
+		}
 	}
 
 	public int writeNow(final ByteBuffer buffer) throws IOException {
-		lastWriteTime = System.currentTimeMillis();
+		final long now = System.currentTimeMillis();
+		lastWriteTime = now;
+		N.lastRequest = now;
 		return socketChannel.write(buffer);
 	}
 }

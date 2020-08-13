@@ -90,6 +90,7 @@ class HttpHandler {
 					// always put all of your money (all possible inputs) to reduce UTXO size
 					final Transaction tx = new Transaction(allMyMoney, outputs, message);
 					response = tx.toString();
+					B.addTx2MemPool(tx);
 					N.toSend(U.serialize(tx), true);
 				}
 				break;
@@ -156,7 +157,7 @@ class HttpHandler {
 			}
 
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
-				| SignatureException | NumberFormatException | ClassNotFoundException e) {
+				| SignatureException | NumberFormatException | ClassNotFoundException | InterruptedException e) {
 			response = "{\"error\":\"" + e.getMessage() + "\"}";
 		} finally {
 			exchange.sendResponseHeaders(200, response.getBytes().length);// response code and length

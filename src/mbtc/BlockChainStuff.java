@@ -25,7 +25,7 @@ class B {
 		bestChain.target = new BigInteger(K.MINIBTC_TARGET, 16);
 		bestChain.UTXO = new HashMap<BigInteger, Transaction>();
 		U.cleanFolder(K.UTXO_FOLDER);
-		saveChain(bestChain);
+		saveNewChain(bestChain);
 	}
 
 	private static void addressMapUpdate(final Chain newChain, final Block block)
@@ -66,6 +66,21 @@ class B {
 		outputs.add(myOutputReward(K.REWARD / 2));
 		outputs.add(devOutputReward(K.REWARD / 2));
 		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
+	}
+
+	private static void deleteOldChain(final long height) throws IOException, ClassNotFoundException {
+		String fileName = null;
+		if (height > 0) {
+			for (int j = 1; j < 10; j++) {
+				fileName = getBlockFileName(height, j);
+				if (new File(fileName).exists()) {
+					final Block b = loadBlockFromFile(fileName);
+					new File(K.UTXO_FOLDER + C.sha(b)).delete();
+				} else {
+					break;
+				}
+			}
+		}
 	}
 
 	private static Output devOutputReward(final long reward) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -188,7 +203,7 @@ class B {
 		Files.write(new File(fileName).toPath(), U.serialize(block));
 	}
 
-	private static void saveChain(final Chain b) {
+	private static void saveNewChain(final Chain b) {
 		try {
 			U.writeToFile(K.UTXO_FOLDER + b.blockHash, U.serialize(b));
 		} catch (final IOException e) {
@@ -309,8 +324,10 @@ class B {
 							// clean mempool
 							for (final Transaction t : block.txs) B.mempool.remove(t);
 						}
+
 						if (persistChain) {
-							saveChain(newChain);
+							saveNewChain(newChain);
+							deleteOldChain(newChain.height - 10);
 						}
 
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
@@ -321,9 +338,6 @@ class B {
 								U.d(2, "WARN: this new block is NOT to my best blockchain. chain: " + newChain);
 						}
 
-						if (persistBlock && persistChain) {
-							N.toSend(from, U.serialize(block), true);
-						}
 					} else {
 						U.d(2, "WARN: INVALID BLOCK. Inputs + Reward != Outputs");
 						return false;
@@ -341,7 +355,6 @@ class B {
 			if (from != null) {
 				final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
 				from.writeNow(ByteBuffer.wrap(U.serialize(message)));
-				N.lastRequest = System.currentTimeMillis();
 			}
 			return false;
 		}

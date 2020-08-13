@@ -107,10 +107,6 @@ class U {
 		return out.toByteArray();
 	}
 
-	static void sleep() throws InterruptedException {
-		sleep(2500);
-	}
-
 	static void sleep(final long millis) throws InterruptedException {
 		Thread.sleep(millis);
 	}
