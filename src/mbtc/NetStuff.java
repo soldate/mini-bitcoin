@@ -69,7 +69,7 @@ class N {
 		boolean disconnect = false;
 		boolean read = false;
 
-		if (channel.getBuffer().remaining() > 0) {
+		if (channel.remaining() > 0) {
 
 			final int qty = channel.read();
 			if (qty <= 0) {
@@ -77,8 +77,8 @@ class N {
 
 			} else {
 				try {
-					final Object txOrBlockOrMsg = U.deserialize(channel.getBuffer().array());
-					channel.getBuffer().clear();
+					final Object txOrBlockOrMsg = U.deserialize(channel.array());
+					channel.clear();
 
 					if (txOrBlockOrMsg instanceof Block) {
 						U.d(1, "NET: READ a BLOCK " + channel);
@@ -130,10 +130,9 @@ class N {
 						disconnect = true;
 					}
 				} catch (final StreamCorruptedException e) {
-					// do nothing
+					channel.errorCount++;
+					if (channel.errorCount > 3) channel.clear();
 					U.d(3, "WARN: is data not ready? " + qty + " bytes: " + channel);
-					U.d(3, "WARN: remaining " + channel.getBuffer().remaining());
-					U.d(3, "WARN: capacity " + channel.getBuffer().capacity());
 
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
 						| InvalidKeySpecException | NoSuchAlgorithmException | InterruptedException e) {
@@ -278,18 +277,28 @@ class SocketChannelWrapper {
 
 	private long lastWriteTime;
 	private final ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
+	int errorCount = 0;
 
 	public SocketChannelWrapper(final SocketChannel socketChannel) {
 		this.socketChannel = socketChannel;
 		this.lastWriteTime = 0;
 	}
 
-	public void close() throws IOException {
-		socketChannel.close();
+	public byte[] array() {
+		return buffer.array();
 	}
 
-	public ByteBuffer getBuffer() {
-		return buffer;
+	public int capacity() {
+		return buffer.capacity();
+	}
+
+	public void clear() {
+		buffer.clear();
+		errorCount = 0;
+	}
+
+	public void close() throws IOException {
+		socketChannel.close();
 	}
 
 	public SocketAddress getLocalAddress() throws IOException {
@@ -314,6 +323,10 @@ class SocketChannelWrapper {
 		} catch (final IOException e) {
 			return -1;
 		}
+	}
+
+	public int remaining() {
+		return buffer.remaining();
 	}
 
 	@Override
