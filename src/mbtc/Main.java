@@ -171,7 +171,7 @@ public class Main {
 				System.exit(0);
 				break;
 
-			// log 0, 1, 2 or 3. 3=Very verbose
+			// log 1, 2 or 3. 3=Very verbose
 			case "/log":
 				U.logVerbosityLevel = Integer.parseInt(args[1]);
 				U.w("------ verbosity " + U.logVerbosityLevel + " ------");
@@ -185,7 +185,3 @@ public class Main {
 		}
 	}
 }
-// testing
-//balance: 150
-//address: 53ad9-7
-//publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEBc3xv9TlO4wyUSWHhOBYkrSeQzNcOFzbssiXt91uBaIoafrfTVRYX9PQliAtC87DiBhAlj3eNNIev8ywFOAYmg==

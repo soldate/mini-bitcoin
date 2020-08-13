@@ -65,7 +65,7 @@ class HttpHandler {
 					}
 				}
 
-				// if address (or !publicKey) then validate verifying digit (%9)
+				// if address then validate verifying digit (%9)
 				if (addressStr.contains("-") && addressStr.length() <= 8) {
 					final String[] account = addressStr.split("-");
 					toAddress = Integer.parseInt(account[0], 16);
@@ -89,23 +89,6 @@ class HttpHandler {
 					}
 
 					// always put all of your money (all possible inputs) to reduce UTXO size
-					// -- bug: too many inputs, bigger blocks, slow mining ----
-//					if (allMyMoney.size() > 10) {
-//						final List<Input> just10 = new ArrayList<Input>();
-//						just10.addAll(allMyMoney.subList(0, 10));
-//						final long bjust10 = B.getBalance(just10);
-//						if (bjust10 >= qty) {
-//							allMyMoney = just10;
-//							outputs.clear();
-//							// create your change
-//							if (bjust10 > qty) {
-//								final Long change = bjust10 - qty;
-//								outputs.add(new Output(U.int2BigInt(Main.me.getPublic().hashCode()), change));
-//							}
-//						}
-//
-//					}
-					// --------------------------------------------------------
 					final Transaction tx = new Transaction(allMyMoney, outputs, message);
 					response = tx.toString();
 					B.addTx2MemPool(tx);
@@ -178,7 +161,8 @@ class HttpHandler {
 				| SignatureException | NumberFormatException | ClassNotFoundException | InterruptedException e) {
 			response = "{\"error\":\"" + e.getMessage() + "\"}";
 		} finally {
-			exchange.sendResponseHeaders(200, response.getBytes().length);// response code and length
+			// response code and length
+			exchange.sendResponseHeaders(200, response.getBytes().length);
 			final OutputStream os = exchange.getResponseBody();
 			os.write(response.getBytes());
 			os.close();
