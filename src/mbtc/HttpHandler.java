@@ -87,7 +87,25 @@ class HttpHandler {
 						final Long change = balance - qty;
 						outputs.add(new Output(U.int2BigInt(Main.me.getPublic().hashCode()), change));
 					}
+
 					// always put all of your money (all possible inputs) to reduce UTXO size
+					// -- bug: too many inputs, bigger blocks, slow mining ----
+//					if (allMyMoney.size() > 10) {
+//						final List<Input> just10 = new ArrayList<Input>();
+//						just10.addAll(allMyMoney.subList(0, 10));
+//						final long bjust10 = B.getBalance(just10);
+//						if (bjust10 >= qty) {
+//							allMyMoney = just10;
+//							outputs.clear();
+//							// create your change
+//							if (bjust10 > qty) {
+//								final Long change = bjust10 - qty;
+//								outputs.add(new Output(U.int2BigInt(Main.me.getPublic().hashCode()), change));
+//							}
+//						}
+//
+//					}
+					// --------------------------------------------------------
 					final Transaction tx = new Transaction(allMyMoney, outputs, message);
 					response = tx.toString();
 					B.addTx2MemPool(tx);

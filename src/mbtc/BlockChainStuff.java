@@ -419,12 +419,18 @@ class B {
 
 	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException,
 			NoSuchAlgorithmException, InvalidKeySpecException {
-		final Block candidate = new Block();
+		final Block candidate = new Block_v2(); // Block
 		candidate.time = System.currentTimeMillis();
 		candidate.lastBlockHash = bestChain.blockHash;
 		candidate.txs = getFromMemPool();
 		// now the coinbase (my reward)
 		createCoinbase(candidate);
+
+		if (candidate instanceof Block_v2) {
+			final Block_v2 b_v2 = (Block_v2) candidate;
+			b_v2.txsHash = C.sha(b_v2.txs);
+		}
+
 		return candidate;
 	}
 

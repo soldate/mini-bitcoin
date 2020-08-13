@@ -56,6 +56,12 @@ class Block extends MyObject implements Serializable {
 	}
 }
 
+/* fix bug: mining should NOT be harder because the number of transactions */
+class Block_v2 extends Block implements Serializable {
+	private static final long serialVersionUID = 1L;
+	BigInteger txsHash;
+}
+
 class Chain extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	long height;

@@ -144,7 +144,20 @@ class C {
 	}
 
 	static BigInteger sha(final Object o) throws IOException {
-		return new BigInteger(1, sha256.digest(U.serialize(o)));
+
+		BigInteger hash = null;
+
+		if (o instanceof Block_v2) {
+			final Block_v2 b_v2 = (Block_v2) o;
+			final List<Transaction> txs = b_v2.txs;
+			b_v2.txs = null;
+			hash = new BigInteger(1, sha256.digest(U.serialize(o)));
+			b_v2.txs = txs;
+		} else {
+			hash = new BigInteger(1, sha256.digest(U.serialize(o)));
+		}
+
+		return hash;
 	}
 
 	static BigInteger sign(final Transaction tx) throws InvalidKeyException, SignatureException, IOException {

@@ -302,7 +302,11 @@ class SocketChannelWrapper {
 	}
 
 	public int read() throws IOException {
-		return socketChannel.read(buffer);
+		try {
+			return socketChannel.read(buffer);
+		} catch (final IOException e) {
+			return -1;
+		}
 	}
 
 	@Override

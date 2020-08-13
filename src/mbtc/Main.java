@@ -5,6 +5,7 @@ import java.math.*;
 import java.net.*;
 import java.security.*;
 import java.security.spec.*;
+import java.util.*;
 
 import com.sun.net.httpserver.*;
 
@@ -56,6 +57,11 @@ public class Main {
 		final long l = U.getGoodRandom();
 		final Block candidate = B.createBlockCandidate();
 		final BigInteger target = B.bestChain.target;
+		final List<Transaction> txs = candidate.txs;
+
+		if (candidate instanceof Block_v2) {
+			candidate.txs = null;
+		}
 
 		U.d(3, "INFO: mining...");
 		for (long i = l; (i < (l + K.MINE_ROUND) && !N.urgent()); i++) {
@@ -66,6 +72,10 @@ public class Main {
 				iFoundIt = true;
 				break;
 			}
+		}
+
+		if (candidate instanceof Block_v2) {
+			candidate.txs = txs;
 		}
 
 		if (iFoundIt) {
