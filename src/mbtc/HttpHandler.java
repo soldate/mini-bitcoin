@@ -150,7 +150,12 @@ class HttpHandler {
 
 			case "/users":
 				setJsonResponse(exchange);
-				response = B.bestChain.address2PublicKey.keySet().toString();
+				response = "{\"users\":[";
+				for (final Integer i : B.bestChain.address2PublicKey.keySet()) {
+					response += "\"" + Integer.toHexString(i) + "="
+							+ B.getBalance(B.getMoney(C.getPublicKey(U.int2BigInt(i), B.bestChain))) + "\", ";
+				}
+				response += "\"...\"]}";
 				break;
 
 			default:

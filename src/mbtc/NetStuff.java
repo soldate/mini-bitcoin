@@ -112,15 +112,19 @@ class N {
 							}
 						}
 
-						if (b == null) {
-							b = B.getBlock(B.bestChain.blockHash);
-							final int n = U.random.nextInt(5) + 1;
-							for (int i = 0; i < n; i++) b = b.previous();
-							U.d(3, "NET: block to response is null");
+						if (b == null) { // 20% chances to send some old block (help sync)
+							int n = U.random.nextInt(5);
+							if (n == 3) {
+								b = B.getBlock(B.bestChain.blockHash);
+								n = U.random.nextInt(5) + 1;
+								for (int i = 0; i < n; i++) b = b.previous();
+							}
 						}
 
-						U.d(3, "NET: block response");
-						channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
+						if (b != null) {
+							U.d(3, "NET: block response");
+							channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
+						}
 
 					} else {
 						disconnect = true;

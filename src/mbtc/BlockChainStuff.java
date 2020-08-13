@@ -542,9 +542,9 @@ class B {
 		if (list == null) return null;
 		String s = "[";
 		for (final MyObject o : list) {
-			s += o.toString(chain) + ", ";
+			if (o != null) s += o.toString(chain) + ", ";
 		}
-		s = s.substring(0, s.length() - 2);
+		if (s.length() > 2) s = s.substring(0, s.length() - 2);
 		s += "]";
 		return s;
 	}
