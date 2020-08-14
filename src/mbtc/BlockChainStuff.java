@@ -75,6 +75,7 @@ class B {
 		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
 	}
 
+	// delete old UTXO to avoid deep reorg
 	private static void deleteOldChain(final long height) throws IOException, ClassNotFoundException {
 		String fileName = null;
 		if (height > 0) {

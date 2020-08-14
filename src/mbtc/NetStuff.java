@@ -23,45 +23,29 @@ class N {
 	static long lastRequest = System.currentTimeMillis();
 	static List<SocketChannelWrapper> p2pChannels = new ArrayList<SocketChannelWrapper>();
 
-	private static void clientConfigAndConnect() throws IOException {
-		U.d(3, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
-		SocketChannel socketChannel = null;
-
-		final InetAddress myIp = InetAddress.getLocalHost();
-
-		if (K.SEEDS != null) {
-			for (String s : K.SEEDS) {
-				try {
-					InetAddress server = null;
-					try {
-						server = InetAddress.getByName(s);
-					} catch (final UnknownHostException e) {
-						// if seed address is unknown, use localhost
-						// seed = docker-compose. localhost = local test
-						if ("seed".equals(s)) {
-							s = "localhost";
-							server = InetAddress.getByName(s);
-						} else {
-							throw e;
-						}
-					}
-
-					// Am i trying to connect to myself?
-					if (server.getHostAddress().contains(myIp.getHostAddress())) {
-						U.d(2, "WARN: do NOT connect to yourself");
-						continue;
-					}
-
-					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.P2P_PORT));
-					socketChannel.configureBlocking(false);
-					p2pChannels.add(new SocketChannelWrapper(socketChannel));
-					U.d(1, "NET: i am CLIENT: " + socketChannel.getLocalAddress() + " of SERVER "
-							+ socketChannel.getRemoteAddress());
-				} catch (ConnectException | UnresolvedAddressException e) {
-					U.d(2, "WARN: can NOT connect to SERVER " + s);
+	static List<String> whoAmI;
+	static {
+		whoAmI = new ArrayList<String>();
+		Enumeration<NetworkInterface> e;
+		try {
+			e = NetworkInterface.getNetworkInterfaces();
+			while (e.hasMoreElements()) {
+				final NetworkInterface n = e.nextElement();
+				final Enumeration<InetAddress> ee = n.getInetAddresses();
+				while (ee.hasMoreElements()) {
+					final InetAddress i = ee.nextElement();
+					whoAmI.add(i.getHostAddress());
 				}
 			}
+		} catch (final SocketException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1.getMessage());
 		}
+
+	}
+
+	public static boolean amIConnected() {
+		return N.p2pChannels.size() > 0;
 	}
 
 	private static boolean readData(final SocketChannelWrapper channel) throws IOException {
@@ -189,6 +173,45 @@ class N {
 		ToSend.dataFrom = null;
 		ToSend.data = null;
 		ToSend.urgent = false;
+	}
+
+	static void clientConfigAndConnect() throws IOException {
+		U.d(3, "CLIENT: p2p = you are client AND server. CLIENT async CONFIG and CONNECTION is here.");
+		SocketChannel socketChannel = null;
+
+		if (K.SEEDS != null) {
+			for (String s : K.SEEDS) {
+				try {
+					InetAddress server = null;
+					try {
+						server = InetAddress.getByName(s);
+					} catch (final UnknownHostException e) {
+						// if "seed" address is unknown, use localhost
+						// seed = docker-compose test. localhost = local test
+						if ("seed".equals(s)) {
+							s = "localhost";
+							server = InetAddress.getByName(s);
+						} else {
+							throw e;
+						}
+					}
+
+					// Am i trying to connect to myself?
+					if (!s.equals("localhost") && whoAmI.contains(server.getHostAddress())) {
+						U.d(2, "WARN: do NOT connect to yourself");
+						continue;
+					}
+
+					socketChannel = SocketChannel.open(new InetSocketAddress(s, K.P2P_PORT));
+					socketChannel.configureBlocking(false);
+					p2pChannels.add(new SocketChannelWrapper(socketChannel));
+					U.d(1, "NET: i am CLIENT: " + socketChannel.getLocalAddress() + " of SERVER "
+							+ socketChannel.getRemoteAddress());
+				} catch (ConnectException | UnresolvedAddressException e) {
+					U.d(2, "WARN: can NOT connect to SERVER " + s);
+				}
+			}
+		}
 	}
 
 	static void configAsyncP2P() throws IOException {

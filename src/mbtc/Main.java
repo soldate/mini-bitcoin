@@ -97,8 +97,13 @@ public class Main {
 				userCommandHandler(ttyReader.readLine());
 			}
 
-			// Any network message to send or receive?
-			N.p2pHandler();
+			if (N.amIConnected()) {
+				// Any network message to send or receive?
+				N.p2pHandler();
+			} else {
+				U.d(2, "WARN: you are NOT connected to anyone");
+				N.clientConfigAndConnect();
+			}
 
 			// timer
 			if (!N.urgent()) shouldIDoSomethingNow();
@@ -115,11 +120,11 @@ public class Main {
 		final long secondsFromLastBlock = (now - N.lastAddBlock) / 1000;
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 
-		if (secondsFromLastBlock > 10 && !startMining) { // More than 10s without receive blocks
+		if (secondsFromLastBlock > 10 && !startMining && N.amIConnected()) { // More than 10s without receive blocks
 			U.d(1, "INFO: Starting mining...");
 			startMining = true;
 
-		} else if (secondsFromLastRequest > 4) { // Ask for more blocks
+		} else if (secondsFromLastRequest > 4 && N.amIConnected()) { // Ask for more blocks
 			final GiveMeABlockMessage message = new GiveMeABlockMessage(B.bestChain.blockHash, true);
 			U.d(2, "Ask for block after this: " + message.blockHash);
 			N.toSend(U.serialize(message));
