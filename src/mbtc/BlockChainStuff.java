@@ -285,7 +285,7 @@ class B {
 
 	static boolean addBlock(final Block block, final boolean persistBlock, final boolean persistChain,
 			final SocketChannelWrapper from) throws InvalidKeyException, SignatureException, IOException,
-			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
+			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 
 		final BigInteger blockHash = C.sha(block);
 		if (blockExists(blockHash)) {
@@ -344,7 +344,7 @@ class B {
 
 						if (persistChain) {
 							saveNewChain(newChain);
-							deleteOldChain(newChain.height - 10);
+							deleteOldChain(newChain.height - 100);
 						}
 
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
@@ -371,20 +371,21 @@ class B {
 			U.d(2, "WARN: Unknown 'last block' of this Block. Asking for block.");
 			if (from != null) {
 				final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
-				from.writeNow(ByteBuffer.wrap(U.serialize(message)));
+				from.write(ByteBuffer.wrap(U.serialize(message)), true, true);
 			}
 			return false;
 		}
 		return true;
 	}
 
-	static boolean addBlock(final Block block, final SocketChannelWrapper channel) throws InvalidKeyException,
-			SignatureException, ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+	static boolean addBlock(final Block block, final SocketChannelWrapper channel)
+			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException,
+			InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 		return addBlock(block, true, true, channel);
 	}
 
 	static boolean addChain(final Block block) throws InvalidKeyException, SignatureException, ClassNotFoundException,
-			IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+			IOException, InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 		return addBlock(block, false, true, null);
 	}
 
@@ -534,8 +535,9 @@ class B {
 	}
 
 	// not used..
-	static boolean isValidBlock(final Block block) throws InvalidKeyException, SignatureException,
-			ClassNotFoundException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+	static boolean isValidBlock(final Block block)
+			throws InvalidKeyException, SignatureException, ClassNotFoundException, IOException,
+			InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 		return addBlock(block, false, false, null);
 	}
 
@@ -551,7 +553,7 @@ class B {
 	}
 
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
-			InvalidKeyException, SignatureException, InvalidKeySpecException {
+			InvalidKeyException, SignatureException, InvalidKeySpecException, InterruptedException {
 		String fileName = null;
 		x: for (long i = 1; i < Long.MAX_VALUE; i++) {
 			for (int j = 1; j < 10; j++) {

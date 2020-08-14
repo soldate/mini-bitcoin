@@ -37,6 +37,7 @@ class N {
 					whoAmI.add(i.getHostAddress());
 				}
 			}
+			U.d(2, "INFO: WhoAmI? " + whoAmI);
 		} catch (final SocketException e1) {
 			e1.printStackTrace();
 			throw new RuntimeException(e1.getMessage());
@@ -51,12 +52,13 @@ class N {
 	private static boolean readData(final SocketChannelWrapper channel) throws IOException {
 
 		boolean disconnect = false;
-		boolean read = false;
+		boolean added = false;
+		GiveMeABlockMessage message = null;
 
 		if (channel.remaining() > 0) {
 
-			final int qty = channel.read();
-			if (qty <= 0) {
+			final int readedBytes = channel.read();
+			if (readedBytes <= 0) {
 				U.d(3, "INFO: nothing to be read");
 
 			} else {
@@ -67,21 +69,27 @@ class N {
 					if (txOrBlockOrMsg instanceof Block) {
 						U.d(1, "NET: READ a BLOCK " + channel);
 						final Block block = (Block) txOrBlockOrMsg;
-						read = B.addBlock(block, channel);
+						added = B.addBlock(block, channel);
 
-						if (read) {
+						if (added) {
 							N.lastAddBlock = System.currentTimeMillis(); /* avoid start mining. sync */
-							N.lastRequest = System.currentTimeMillis();
+							N.lastRequest = System.currentTimeMillis(); /* avoid keep asking for blocks to all */
+
+							// ask for the next block
+							message = new GiveMeABlockMessage(C.sha(block), true);
+							channel.write(ByteBuffer.wrap(U.serialize(message)), true);
+
+							// send this block to all
 							N.toSend(channel, U.serialize(block), true);
 						}
 
 					} else if (txOrBlockOrMsg instanceof Transaction) {
 						U.d(1, "NET: READ a TRANSACTION " + channel);
-						read = B.addTx2MemPool((Transaction) txOrBlockOrMsg);
-						if (read) N.toSend(channel, U.serialize(txOrBlockOrMsg), true);
+						added = B.addTx2MemPool((Transaction) txOrBlockOrMsg);
+						if (added) N.toSend(channel, U.serialize(txOrBlockOrMsg), true);
 
 					} else if (txOrBlockOrMsg instanceof GiveMeABlockMessage) {
-						final GiveMeABlockMessage message = (GiveMeABlockMessage) txOrBlockOrMsg;
+						message = (GiveMeABlockMessage) txOrBlockOrMsg;
 						U.d(3, "NET: Somebody is asking for " + (message.next ? "a block after this:" : "this block:")
 								+ message.blockHash + " - " + channel);
 
@@ -94,20 +102,15 @@ class N {
 								U.d(3, "NET: exactly block:" + message.blockHash);
 								b = B.getBlock(message.blockHash);
 							}
-						}
-
-						if (b == null) { // 20% chances to send some old block (help sync)
-							int n = U.random.nextInt(5);
-							if (n == 3) {
-								b = B.getBlock(B.bestChain.blockHash);
-								n = U.random.nextInt(5) + 1;
-								for (int i = 0; i < n; i++) b = b.previous();
-							}
+						} else if (message.next) {
+							// which block is this guy talking about?
+							message = new GiveMeABlockMessage(message.blockHash, false);
+							channel.write(ByteBuffer.wrap(U.serialize(message)), true, true);
 						}
 
 						if (b != null) {
 							U.d(3, "NET: block response");
-							channel.writeNow(ByteBuffer.wrap(U.serialize(b)));
+							channel.write(ByteBuffer.wrap(U.serialize(b)), false);
 						}
 
 					} else {
@@ -116,7 +119,7 @@ class N {
 				} catch (final StreamCorruptedException e) {
 					channel.errorCount++;
 					if (channel.errorCount > 3) channel.clear();
-					U.d(3, "WARN: is data not ready? " + qty + " bytes: " + channel);
+					U.d(3, "WARN: is data not ready? " + readedBytes + " bytes: " + channel);
 
 				} catch (ClassNotFoundException | IOException | InvalidKeyException | SignatureException
 						| InvalidKeySpecException | NoSuchAlgorithmException | InterruptedException e) {
@@ -135,7 +138,7 @@ class N {
 			channel.close();
 		}
 
-		return read;
+		return added;
 	}
 
 	private static void sendData(final SocketChannelWrapper channel) throws IOException, InterruptedException {
@@ -147,7 +150,7 @@ class N {
 			}
 
 			int qty = 0;
-			qty = channel.write(ByteBuffer.wrap(ToSend.data));
+			qty = channel.write(ByteBuffer.wrap(ToSend.data), ToSend.urgent);
 			if (qty != -1) U.d(2, "NET: WROTE " + qty + " bytes " + channel);
 
 		} catch (final IOException e) {
@@ -271,21 +274,9 @@ class N {
 
 	static synchronized void toSend(final SocketChannelWrapper from, final byte[] data, final boolean urgent)
 			throws InterruptedException {
-		final long now = System.currentTimeMillis();
-		final long secondsFromLastRequest = (now - lastRequest) / 1000;
-
-		if (ToSend.urgent && 2 > secondsFromLastRequest) {
-			lastRequest = now;
-			Thread.sleep(1000);
-
-		} else if (ToSend.urgent && !urgent) {
-			return;
-		}
-
 		ToSend.dataFrom = from;
 		ToSend.data = data;
 		ToSend.urgent = urgent;
-		lastRequest = now;
 	}
 
 	static boolean urgent() {
@@ -301,6 +292,7 @@ class SocketChannelWrapper {
 	private long lastWriteTime;
 	private final ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	int errorCount = 0;
+	private boolean assumeSync = true;
 
 	public SocketChannelWrapper(final SocketChannel socketChannel) {
 		this.socketChannel = socketChannel;
@@ -361,25 +353,29 @@ class SocketChannelWrapper {
 		}
 	}
 
-	public int write(final ByteBuffer buffer) throws IOException {
-		if (N.urgent()) {
-			return writeNow(buffer);
-		} else {
-			final long now = System.currentTimeMillis();
-			final long diff = (now - lastWriteTime) / 1000;
-
-			if (diff >= 4 || lastWriteTime == 0) {
-				lastWriteTime = now;
-				N.lastRequest = now;
-				return socketChannel.write(buffer);
-			} else return -1;
-		}
+	public int write(final ByteBuffer buffer, final boolean urgent) throws IOException, InterruptedException {
+		return write(buffer, urgent, false);
 	}
 
-	public int writeNow(final ByteBuffer buffer) throws IOException {
+	public synchronized int write(final ByteBuffer buffer, final boolean urgent, final boolean syncMessage)
+			throws IOException, InterruptedException {
 		final long now = System.currentTimeMillis();
-		lastWriteTime = now;
-		N.lastRequest = now;
-		return socketChannel.write(buffer);
+		final long diff = (now - lastWriteTime) / 1000;
+
+		// after 3 minutes. assume sync.
+		if (diff > (3 * 60)) assumeSync = true;
+
+		if (syncMessage) assumeSync = false;
+
+		if (!assumeSync && syncMessage) return socketChannel.write(buffer);
+
+		if (assumeSync && diff >= 4 || urgent) {
+			if (diff < 4) {
+				Thread.sleep(2000);
+			}
+			N.lastRequest = now;
+			lastWriteTime = now;
+			return socketChannel.write(buffer);
+		} else return -1;
 	}
 }
