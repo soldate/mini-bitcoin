@@ -103,14 +103,14 @@ class N {
 								b = B.getBlock(message.blockHash);
 							}
 						} else if (message.next) {
-							// which block is this guy talking about?
+							U.d(2, "NET: which block is this guy talking about? " + channel);
 							message = new GiveMeABlockMessage(message.blockHash, false);
 							channel.write(ByteBuffer.wrap(U.serialize(message)), true, true);
 						}
 
 						if (b != null) {
 							U.d(3, "NET: block response");
-							channel.write(ByteBuffer.wrap(U.serialize(b)), false);
+							channel.write(ByteBuffer.wrap(U.serialize(b)), true);
 						}
 
 					} else {
@@ -173,6 +173,7 @@ class N {
 	}
 
 	static void cleanDataToSend() {
+		N.lastRequest = System.currentTimeMillis();
 		ToSend.dataFrom = null;
 		ToSend.data = null;
 		ToSend.urgent = false;
@@ -362,20 +363,30 @@ class SocketChannelWrapper {
 		final long now = System.currentTimeMillis();
 		final long diff = (now - lastWriteTime) / 1000;
 
-		// after 3 minutes. assume sync.
-		if (diff > (3 * 60)) assumeSync = true;
+		// after 10 seconds. assume sync.
+		if (diff > 10) {
+			U.d(2, "INFO: probably sync " + this);
+			assumeSync = true;
+		}
 
 		if (syncMessage) assumeSync = false;
 
-		if (!assumeSync && syncMessage) return socketChannel.write(buffer);
+		if (!assumeSync && syncMessage) {
+			lastWriteTime = now;
+			U.d(2, "INFO: WRITE syncMessage " + this);
+			return socketChannel.write(buffer);
+		}
 
-		if (assumeSync && diff >= 4 || urgent) {
+		if ((assumeSync && diff >= 4) || urgent) {
 			if (diff < 4) {
 				Thread.sleep(2000);
 			}
-			N.lastRequest = now;
 			lastWriteTime = now;
+			U.d(2, "INFO: WRITE request " + this);
 			return socketChannel.write(buffer);
-		} else return -1;
+		} else {
+			U.d(2, "WARN: NOT sending this request");
+			return -1;
+		}
 	}
 }
