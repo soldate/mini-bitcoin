@@ -453,6 +453,7 @@ class B {
 	}
 
 	static long getBalance(final List<Input> myMoney) {
+		if (myMoney == null) return 0;
 		long balance = 0;
 		for (final Input i : myMoney) {
 			final Output o = getOutput(i);

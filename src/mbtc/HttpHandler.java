@@ -165,6 +165,10 @@ class HttpHandler {
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | InvalidKeyException
 				| SignatureException | NumberFormatException | ClassNotFoundException | InterruptedException e) {
 			response = "{\"error\":\"" + e.getMessage() + "\"}";
+
+		} catch (final Exception e) { // why?
+			response = "{\"error\":\"" + e.getMessage() + "\"}";
+
 		} finally {
 			// response code and length
 			exchange.sendResponseHeaders(200, response.getBytes().length);
