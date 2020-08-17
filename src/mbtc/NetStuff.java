@@ -292,9 +292,10 @@ class SocketChannelWrapper {
 
 	private long lastWriteTime;
 	private final ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
+	private boolean assumeSync = true;
 	int errorCount = 0;
 	int unknownBlockCount = 0;
-	private boolean assumeSync = true;
+	boolean ignore = false;
 
 	public SocketChannelWrapper(final SocketChannel socketChannel) {
 		this.socketChannel = socketChannel;
@@ -336,6 +337,7 @@ class SocketChannelWrapper {
 
 	public int read() throws IOException {
 		try {
+			if (ignore) return -1;
 			return socketChannel.read(buffer);
 		} catch (final IOException e) {
 			return -1;
@@ -356,11 +358,13 @@ class SocketChannelWrapper {
 	}
 
 	public int write(final ByteBuffer buffer, final boolean urgent) throws IOException, InterruptedException {
+		if (ignore) return -1;
 		return write(buffer, urgent, false);
 	}
 
 	public synchronized int write(final ByteBuffer buffer, final boolean urgent, final boolean syncMessage)
 			throws IOException, InterruptedException {
+		if (ignore) return -1;
 		final long now = System.currentTimeMillis();
 		final long diff = (now - lastWriteTime) / 1000;
 

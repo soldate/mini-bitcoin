@@ -436,7 +436,7 @@ class B {
 					final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
 					from.write(ByteBuffer.wrap(U.serialize(message)), true, true);
 				} else {
-					from.close();
+					from.ignore = true;
 				}
 			}
 			return false;
