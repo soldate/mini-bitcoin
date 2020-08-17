@@ -47,6 +47,34 @@ class B {
 		}
 	}
 
+	// are old outputs like new outputs?
+	private static boolean checkFusionTx(final Chain chain, final Transaction tx)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		final Map<PublicKey, Long> user2Balance = new HashMap<PublicKey, Long>();
+
+		PublicKey pk = null;
+		// get old outputs
+		for (final Input in : tx.inputs) {
+			final Output out = getOutput(in, chain);
+			if (out == null) return false;
+			pk = out.getPublicKey(chain);
+			if (user2Balance.containsKey(pk)) {
+				user2Balance.put(pk, user2Balance.get(pk) + out.value);
+			} else {
+				user2Balance.put(pk, out.value);
+			}
+		}
+
+		// check if it is like the new outputs
+		for (final Output out : tx.outputs) {
+			pk = out.getPublicKey(chain);
+			if (!user2Balance.containsKey(pk) || user2Balance.get(pk) != out.value) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private static boolean checkInputsTxSignature(final Chain chain, final Transaction tx) throws InvalidKeyException,
 			SignatureException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
 		BigInteger signature = null;
@@ -107,7 +135,8 @@ class B {
 		}
 	}
 
-	private static List<Transaction> getFromMemPool() throws IOException {
+	private static List<Transaction> getFromMemPool() throws IOException, InvalidKeySpecException,
+			NoSuchAlgorithmException, InvalidKeyException, SignatureException, ClassNotFoundException {
 		final List<Transaction> txs = new ArrayList<Transaction>();
 		int txBytesSize = 0;
 		int totalSize = 0;
@@ -132,6 +161,31 @@ class B {
 		for (final Transaction t : toRemove) {
 			mempool.remove(t);
 		}
+
+		// create fusion transaction. shrink utxo.
+		final List<Input> fusionInputs = new ArrayList<Input>();
+		final List<Output> fusionOutputs = new ArrayList<Output>();
+		Transaction fusionTx = null;
+		Transaction tx = null;
+
+		for (final PublicKey pk : B.bestChain.address2PublicKey.values()) {
+			txInputs = B.getMoney(pk);
+			if (txInputs != null && txInputs.size() > 1 && Collections.disjoint(allInputs, txInputs)) {
+				fusionInputs.addAll(txInputs);
+				final Long balance = getBalance(txInputs);
+				final Output output = new Output(C.getAddressOrPublicKey(pk, B.bestChain), balance);
+				fusionOutputs.add(output);
+				tx = new Transaction(fusionInputs, fusionOutputs, null);
+				txBytesSize = U.serialize(tx).length;
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					fusionTx = (Transaction) U.deepCopy(tx);
+				} else {
+					break;
+				}
+			}
+		}
+
+		if (fusionTx != null) txs.add(fusionTx);
 
 		return txs;
 	}
@@ -322,8 +376,15 @@ class B {
 							U.d(2, "WARN: INVALID BLOCK. Message too big.");
 							return false;
 						}
-						if (!checkInputsTxSignature(chain, tx)) {
+
+						if (tx.signature != null && !checkInputsTxSignature(chain, tx)) {
 							U.d(2, "WARN: INVALID BLOCK. Wrong txs signature.");
+							return false;
+						}
+
+						// fusion transaction
+						if (tx.signature == null && !checkFusionTx(chain, tx)) {
+							U.d(2, "WARN: INVALID BLOCK. Wrong fusion tx.");
 							return false;
 						}
 					}
@@ -344,7 +405,7 @@ class B {
 
 						if (persistChain) {
 							saveNewChain(newChain);
-							deleteOldChain(newChain.height - 100);
+							deleteOldChain(newChain.height - 10);
 						}
 
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
@@ -370,8 +431,13 @@ class B {
 		} else {
 			U.d(2, "WARN: Unknown 'last block' of this Block. Asking for block.");
 			if (from != null) {
-				final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
-				from.write(ByteBuffer.wrap(U.serialize(message)), true, true);
+				from.unknownBlockCount++;
+				if (from.unknownBlockCount < 50) {
+					final GiveMeABlockMessage message = new GiveMeABlockMessage(block.lastBlockHash, false);
+					from.write(ByteBuffer.wrap(U.serialize(message)), true, true);
+				} else {
+					from.close();
+				}
 			}
 			return false;
 		}
@@ -436,7 +502,7 @@ class B {
 	}
 
 	static Block createBlockCandidate() throws IOException, InvalidKeyException, SignatureException,
-			NoSuchAlgorithmException, InvalidKeySpecException {
+			NoSuchAlgorithmException, InvalidKeySpecException, ClassNotFoundException {
 		final Block candidate = new Block_v2(); // Block
 		candidate.time = System.currentTimeMillis();
 		candidate.lastBlockHash = bestChain.blockHash;
@@ -452,10 +518,10 @@ class B {
 		return candidate;
 	}
 
-	static long getBalance(final List<Input> myMoney) {
-		if (myMoney == null) return 0;
+	static long getBalance(final List<Input> inputs) {
+		if (inputs == null) return 0;
 		long balance = 0;
-		for (final Input i : myMoney) {
+		for (final Input i : inputs) {
 			final Output o = getOutput(i);
 			balance += o.value;
 		}

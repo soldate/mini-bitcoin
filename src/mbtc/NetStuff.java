@@ -293,6 +293,7 @@ class SocketChannelWrapper {
 	private long lastWriteTime;
 	private final ByteBuffer buffer = ByteBuffer.allocate(K.MAX_BLOCK_SIZE);
 	int errorCount = 0;
+	int unknownBlockCount = 0;
 	private boolean assumeSync = true;
 
 	public SocketChannelWrapper(final SocketChannel socketChannel) {
