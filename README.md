@@ -19,7 +19,7 @@ and (for developers)
 * Eclipse IDE (recommended)
 * docker-compose (recommended)
 
-## How To GO
+## How To GO (Mine / Run)
 
 For the first time, do
 
