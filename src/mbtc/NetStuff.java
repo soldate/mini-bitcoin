@@ -337,7 +337,10 @@ class SocketChannelWrapper {
 
 	public int read() throws IOException {
 		try {
-			if (ignore) return -1;
+			if (ignore) {
+				U.d(2, "WARN: read IGNORING " + this);
+				return -1;
+			}
 			return socketChannel.read(buffer);
 		} catch (final IOException e) {
 			return -1;
@@ -358,13 +361,19 @@ class SocketChannelWrapper {
 	}
 
 	public int write(final ByteBuffer buffer, final boolean urgent) throws IOException, InterruptedException {
-		if (ignore) return -1;
+		if (ignore) {
+			U.d(2, "WARN: write IGNORING " + this);
+			return -1;
+		}
 		return write(buffer, urgent, false);
 	}
 
 	public synchronized int write(final ByteBuffer buffer, final boolean urgent, final boolean syncMessage)
 			throws IOException, InterruptedException {
-		if (ignore) return -1;
+		if (ignore) {
+			U.d(2, "WARN: write sync IGNORING " + this);
+			return -1;
+		}
 		final long now = System.currentTimeMillis();
 		final long diff = (now - lastWriteTime) / 1000;
 

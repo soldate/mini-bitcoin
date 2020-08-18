@@ -38,7 +38,9 @@ docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
 
 Go to [http://localhost:8080](http://localhost:8080)
 
-## Understanding the code
+That's it! :-D
+
+## Understanding the code - For developers
 
 Inside mbtc.Main you get the "main method" starting point.
 
