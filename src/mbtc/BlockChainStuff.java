@@ -38,10 +38,15 @@ class B {
 	private static void addressMapUpdate(final Chain newChain, final Block block)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		for (final Transaction tx : block.txs) {
-			for (final Output out : tx.outputs) {
-				final PublicKey publickey = out.getPublicKey(newChain);
-				if (!newChain.address2PublicKey.containsKey(publickey.hashCode())) {
-					newChain.address2PublicKey.put(publickey.hashCode(), publickey);
+			if (tx instanceof RemoveAddressTransaction) {
+				final RemoveAddressTransaction rtx = (RemoveAddressTransaction) tx;
+				newChain.address2PublicKey.remove(rtx.address);
+			} else if (tx.outputs != null) {
+				for (final Output out : tx.outputs) {
+					final PublicKey publickey = out.getPublicKey(newChain);
+					if (!newChain.address2PublicKey.containsKey(publickey.hashCode())) {
+						newChain.address2PublicKey.put(publickey.hashCode(), publickey);
+					}
 				}
 			}
 		}
@@ -94,6 +99,26 @@ class B {
 		return true;
 	}
 
+	private static boolean checkPositiveValues(final Chain chain, final Transaction tx) {
+		if (tx.inputs != null) {
+			for (int i = 0; i < tx.inputs.size(); i++) {
+				final Input in = tx.inputs.get(i);
+				final Output out = getOutput(in, chain);
+				if (out == null) return false;
+				if (out.value <= 0) return false;
+			}
+		}
+
+		if (tx.outputs != null) {
+			for (int i = 0; i < tx.outputs.size(); i++) {
+				final Output out = tx.outputs.get(i);
+				if (out == null) return false;
+				if (out.value < 0) return false;
+			}
+		}
+		return true;
+	}
+
 	// add reward tx in block candidate
 	private static void createCoinbase(final Block candidate) throws InvalidKeyException, SignatureException,
 			IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -135,6 +160,7 @@ class B {
 		}
 	}
 
+	// 3 steps. get from mempool, fusion transaction and remove address balance zero
 	private static List<Transaction> getFromMemPool() throws IOException, InvalidKeySpecException,
 			NoSuchAlgorithmException, InvalidKeyException, SignatureException, ClassNotFoundException {
 		final List<Transaction> txs = new ArrayList<Transaction>();
@@ -144,6 +170,7 @@ class B {
 		List<Input> txInputs = null;
 		final List<Transaction> toRemove = new ArrayList<Transaction>();
 
+		// get from mempool
 		for (final Transaction tx : mempool) {
 			txInputs = isValidTx(tx);
 			if (txInputs != null && Collections.disjoint(allInputs, txInputs)) {
@@ -161,6 +188,7 @@ class B {
 		for (final Transaction t : toRemove) {
 			mempool.remove(t);
 		}
+		// ------------------------
 
 		// create fusion transaction. shrink utxo.
 		final List<Input> fusionInputs = new ArrayList<Input>();
@@ -169,7 +197,7 @@ class B {
 		Transaction tx = null;
 
 		for (final PublicKey pk : B.bestChain.address2PublicKey.values()) {
-			txInputs = B.getMoney(pk);
+			txInputs = B.getMoney(pk, B.bestChain);
 			if (txInputs != null && txInputs.size() > 1 && Collections.disjoint(allInputs, txInputs)) {
 				fusionInputs.addAll(txInputs);
 				final Long balance = getBalance(txInputs);
@@ -186,6 +214,25 @@ class B {
 		}
 
 		if (fusionTx != null) txs.add(fusionTx);
+
+		totalSize = U.serialize(txs).length;
+		// ------------------------
+
+		// clean address2PublicKey. balance = 0 is not a user anymore.
+		for (final Integer address : bestChain.address2PublicKey.keySet()) {
+			final Long balance = getBalance(address);
+			if (balance == 0) {
+				final RemoveAddressTransaction rtx = new RemoveAddressTransaction(address);
+				txBytesSize = U.serialize(rtx).length;
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					txs.add(rtx);
+				} else {
+					break;
+				}
+			}
+		}
+
+		// ------------------------
 
 		return txs;
 	}
@@ -292,9 +339,11 @@ class B {
 	private static long sumOfOutputs(final Chain chain, final List<Transaction> txs) {
 		long s = 0;
 		for (final Transaction tx : txs) {
-			for (final Output out : tx.outputs) {
-				if (out.value <= 0) return -1;
-				s += out.value;
+			if (tx.outputs != null) {
+				for (final Output out : tx.outputs) {
+					if (out.value <= 0) return -1;
+					s += out.value;
+				}
 			}
 		}
 		return s;
@@ -377,13 +426,26 @@ class B {
 							return false;
 						}
 
-						if (tx.signature != null && !checkInputsTxSignature(chain, tx)) {
-							U.d(2, "WARN: INVALID BLOCK. Wrong txs signature.");
-							return false;
-						}
+						if (tx instanceof RemoveAddressTransaction) {
+							final RemoveAddressTransaction r = (RemoveAddressTransaction) tx;
+							final Long balance = getBalance(r.address, chain);
+							if (balance != 0) {
+								U.d(2, "WARN: INVALID BLOCK. Can NOT remove address with balance != zero.");
+								return false;
+							}
 
-						// fusion transaction
-						if (tx.signature == null && !checkFusionTx(chain, tx)) {
+						} else if (tx.signature != null) {
+							if (!checkInputsTxSignature(chain, tx)) {
+								U.d(2, "WARN: INVALID BLOCK. Wrong txs signature.");
+								return false;
+							}
+
+							if (!checkPositiveValues(chain, tx)) {
+								U.d(2, "WARN: INVALID BLOCK. Wrong txs signature.");
+								return false;
+							}
+
+						} else if (tx.signature == null && !checkFusionTx(chain, tx)) { // fusion transaction
 							U.d(2, "WARN: INVALID BLOCK. Wrong fusion tx.");
 							return false;
 						}
@@ -518,6 +580,15 @@ class B {
 		return candidate;
 	}
 
+	static Long getBalance(final Integer address) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return getBalance(address, B.bestChain);
+	}
+
+	static Long getBalance(final Integer address, final Chain chain)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return B.getBalance(B.getMoney(C.getPublicKey(U.int2BigInt(address), chain), chain));
+	}
+
 	static long getBalance(final List<Input> inputs) {
 		if (inputs == null) return 0;
 		long balance = 0;
@@ -546,18 +617,21 @@ class B {
 		return K.BLOCK_FOLDER + String.format("%012d", height) + "_" + i + ".block";
 	}
 
-	static List<Input> getMoney(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	static List<Input> getMoney(final PublicKey publicKey, final Chain chain)
+			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		List<Input> inputs = null;
 		Transaction tx = null;
 		BigInteger txHash = null;
+		Output output = null;
 
-		if (bestChain.UTXO == null) return null;
+		if (chain.UTXO == null) return null;
 
-		for (final Map.Entry<BigInteger, Transaction> entry : bestChain.UTXO.entrySet()) {
+		for (final Map.Entry<BigInteger, Transaction> entry : chain.UTXO.entrySet()) {
 			txHash = entry.getKey();
 			tx = entry.getValue();
 			for (int i = 0; i < tx.outputs.size(); i++) {
-				if (tx.outputs.get(i) != null && tx.outputs.get(i).getPublicKey(bestChain).equals(publicKey)) {
+				output = tx.outputs.get(i);
+				if (output != null && output.value > 0 && output.getPublicKey(chain).equals(publicKey)) {
 					if (inputs == null) inputs = new ArrayList<Input>();
 					final Input input = new Input(txHash, i);
 					inputs.add(input);

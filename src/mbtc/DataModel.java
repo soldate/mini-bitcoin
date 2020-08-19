@@ -174,6 +174,28 @@ class Output extends MyObject implements Serializable {
 	}
 }
 
+// "garbage collector"
+class RemoveAddressTransaction extends Transaction implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	Integer address;
+
+	RemoveAddressTransaction(final Integer address) throws InvalidKeyException, SignatureException, IOException {
+		super(null, null, "remove");
+		this.address = address;
+	}
+
+	@Override
+	public String toString() {
+		return "{\"remove\":" + this.address + "}";
+	}
+
+	@Override
+	public String toString(final Chain chain) {
+		return toString();
+	}
+}
+
 class Transaction extends MyObject implements Serializable {
 	private static final long serialVersionUID = 1L;
 	List<Input> inputs;
@@ -183,11 +205,19 @@ class Transaction extends MyObject implements Serializable {
 
 	Transaction(final List<Input> inputs, final List<Output> outputs, final String message)
 			throws InvalidKeyException, SignatureException, IOException {
-		this.inputs = inputs;
-		if (outputs == null) throw new RuntimeException("Error: Missing outputs in create transaction");
-		this.outputs = outputs;
-		this.message = message;
-		this.signature = C.sign(this);
+		if (message != null && "remove".equals(message)) {
+			this.inputs = null;
+			this.outputs = null;
+			this.signature = null;
+			this.message = message;
+
+		} else {
+			this.inputs = inputs;
+			if (outputs == null) throw new RuntimeException("Error: Missing outputs in create transaction");
+			this.outputs = outputs;
+			this.message = message;
+			this.signature = C.sign(this);
+		}
 	}
 
 	@Override

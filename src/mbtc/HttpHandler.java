@@ -25,7 +25,7 @@ class HttpHandler {
 			if (uri.equals("/favicon.ico")) return;
 			final String[] cmd = uri.split("%20");
 
-			final List<Input> allMyMoney = B.getMoney(Main.me.getPublic());
+			final List<Input> allMyMoney = B.getMoney(Main.me.getPublic(), B.bestChain);
 			final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
 			final int address = Main.me.getPublic().hashCode();
 			String addressStr = Integer.toHexString(address) + "-" + (address % 9);
@@ -152,8 +152,7 @@ class HttpHandler {
 				setJsonResponse(exchange);
 				response = "{\"users\":[";
 				for (final Integer i : B.bestChain.address2PublicKey.keySet()) {
-					response += "\"" + Integer.toHexString(i) + "="
-							+ B.getBalance(B.getMoney(C.getPublicKey(U.int2BigInt(i), B.bestChain))) + "\", ";
+					response += "\"" + Integer.toHexString(i) + "=" + B.getBalance(i) + "\", ";
 				}
 				response += "\"...\"]}";
 				break;
