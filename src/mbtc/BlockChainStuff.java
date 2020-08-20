@@ -35,6 +35,29 @@ class B {
 		}
 	}
 
+	private static void addRemoveAddressTransactions(final List<Transaction> txs, final int totalSize)
+			throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException, SignatureException,
+			IOException {
+		int txBytesSize;
+		final List<RemoveAddressTransaction> toClean = new ArrayList<RemoveAddressTransaction>();
+		for (final Integer address : bestChain.address2PublicKey.keySet()) {
+			final Long balance = getBalance(address);
+			if (balance == 0) {
+				final RemoveAddressTransaction rtx = new RemoveAddressTransaction(address);
+				txBytesSize = U.serialize(rtx).length;
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					toClean.add(rtx);
+				} else {
+					break;
+				}
+			}
+		}
+
+		if (toClean.size() > 0) {
+			txs.addAll(toClean);
+		}
+	}
+
 	private static void addressMapUpdate(final Chain newChain, final Block block)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
 		for (final Transaction tx : block.txs) {
@@ -128,6 +151,41 @@ class B {
 		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
 	}
 
+	private static Transaction createFusionTransaction(final int totalSize, final List<Input> allInputs,
+			final Chain chain) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException,
+			SignatureException, IOException, ClassNotFoundException {
+		int txBytesSize;
+		List<Input> txInputs;
+		final List<Input> fusionInputs = new ArrayList<Input>();
+		final List<Output> fusionOutputs = new ArrayList<Output>();
+		Transaction fusionTx = null;
+		Transaction tx = null;
+
+		for (final PublicKey pk : chain.address2PublicKey.values()) {
+			txInputs = B.getMoney(pk, chain);
+			if (txInputs != null && txInputs.size() > 1 && Collections.disjoint(allInputs, txInputs)) {
+				fusionInputs.addAll(txInputs);
+				final Long balance = getBalance(txInputs);
+				final Output output = new Output(C.getAddressOrPublicKey(pk, chain), balance);
+				fusionOutputs.add(output);
+				tx = new Transaction(fusionInputs, fusionOutputs, null);
+				txBytesSize = U.serialize(tx).length;
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					fusionTx = (Transaction) U.deepCopy(tx);
+				} else {
+					fusionInputs.removeAll(txInputs);
+					break;
+				}
+			}
+		}
+
+		if (fusionTx != null) {
+			allInputs.addAll(fusionInputs);
+		}
+
+		return fusionTx;
+	}
+
 	// delete old UTXO to avoid deep reorg
 	private static void deleteOldChain(final long height) throws IOException, ClassNotFoundException {
 		String fileName = null;
@@ -191,47 +249,13 @@ class B {
 		// ------------------------
 
 		// create fusion transaction. shrink utxo.
-		final List<Input> fusionInputs = new ArrayList<Input>();
-		final List<Output> fusionOutputs = new ArrayList<Output>();
-		Transaction fusionTx = null;
-		Transaction tx = null;
-
-		for (final PublicKey pk : B.bestChain.address2PublicKey.values()) {
-			txInputs = B.getMoney(pk, B.bestChain);
-			if (txInputs != null && txInputs.size() > 1 && Collections.disjoint(allInputs, txInputs)) {
-				fusionInputs.addAll(txInputs);
-				final Long balance = getBalance(txInputs);
-				final Output output = new Output(C.getAddressOrPublicKey(pk, B.bestChain), balance);
-				fusionOutputs.add(output);
-				tx = new Transaction(fusionInputs, fusionOutputs, null);
-				txBytesSize = U.serialize(tx).length;
-				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
-					fusionTx = (Transaction) U.deepCopy(tx);
-				} else {
-					break;
-				}
-			}
-		}
-
+		final Transaction fusionTx = createFusionTransaction(totalSize, allInputs, B.bestChain);
 		if (fusionTx != null) txs.add(fusionTx);
-
 		totalSize = U.serialize(txs).length;
 		// ------------------------
 
 		// clean address2PublicKey. balance = 0 is not a user anymore.
-		for (final Integer address : bestChain.address2PublicKey.keySet()) {
-			final Long balance = getBalance(address);
-			if (balance == 0) {
-				final RemoveAddressTransaction rtx = new RemoveAddressTransaction(address);
-				txBytesSize = U.serialize(rtx).length;
-				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
-					txs.add(rtx);
-				} else {
-					break;
-				}
-			}
-		}
-
+		addRemoveAddressTransactions(txs, totalSize);
 		// ------------------------
 
 		return txs;
@@ -420,6 +444,8 @@ class B {
 			// if the work was done, check transactions
 			if (chain.target.compareTo(blockHash) > 0) {
 				if (block.txs != null) { // null == not even coinbase tx??
+
+					boolean blockContainsRemoveAddress = false;
 					for (final Transaction tx : block.txs) {
 						if (tx.message != null && tx.message.length() > 140) {
 							U.d(2, "WARN: INVALID BLOCK. Message too big.");
@@ -427,6 +453,7 @@ class B {
 						}
 
 						if (tx instanceof RemoveAddressTransaction) {
+							blockContainsRemoveAddress = true;
 							final RemoveAddressTransaction r = (RemoveAddressTransaction) tx;
 							final Long balance = getBalance(r.address, chain);
 							if (balance != 0) {
@@ -447,6 +474,15 @@ class B {
 
 						} else if (tx.signature == null && !checkFusionTx(chain, tx)) { // fusion transaction
 							U.d(2, "WARN: INVALID BLOCK. Wrong fusion tx.");
+							return false;
+						}
+					}
+
+					if (chain.height > 1232 && !blockContainsRemoveAddress) {
+						final List<Transaction> l = new ArrayList<Transaction>();
+						addRemoveAddressTransactions(l, U.serialize(block).length);
+						if (l.size() > 0) {
+							U.d(2, "WARN: INVALID BLOCK. Block must clean address balance zero.");
 							return false;
 						}
 					}
