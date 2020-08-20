@@ -21,6 +21,7 @@ class K {
 	static final String BLOCK_FOLDER = "data/blockchain/";
 	static final String UTXO_FOLDER = "data/utxo/";
 	static final String KEY_FOLDER = "data/keypair/";
+	static final String SNAPSHOT = "data/snapshot";
 
 	// bigger value means more mining attempts and slow terminal (and net) response to user.
 	static final long MINE_ROUND = 5 * 10000;

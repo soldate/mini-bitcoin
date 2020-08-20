@@ -186,18 +186,27 @@ class B {
 		return fusionTx;
 	}
 
-	// delete old UTXO to avoid deep reorg
-	private static void deleteOldChain(final long height) throws IOException, ClassNotFoundException {
+	// delete old UTXO to avoid deep reorg (delete = rename utxo to snapshot)
+	private static void deleteOldChain(final long actualHeight) throws IOException, ClassNotFoundException {
 		String fileName = null;
+		final long height = actualHeight - 10;
 		if (height > 0) {
-			for (int j = 1; j < 10; j++) {
+			int j;
+			Block b = null;
+			for (j = 1; j < 10; j++) {
 				fileName = getBlockFileName(height, j);
 				if (new File(fileName).exists()) {
-					final Block b = loadBlockFromFile(fileName);
-					new File(K.UTXO_FOLDER + C.sha(b)).delete();
+					b = loadBlockFromFile(fileName);
 				} else {
 					break;
 				}
+			}
+			// if only one block at that height, save snapshot
+			if (j == 2) {
+				final File snapshot = new File(K.SNAPSHOT);
+				if (snapshot.exists()) snapshot.delete();
+
+				new File(K.UTXO_FOLDER + C.sha(b)).renameTo(new File(K.SNAPSHOT));
 			}
 		}
 	}
@@ -503,7 +512,7 @@ class B {
 
 						if (persistChain) {
 							saveNewChain(newChain);
-							deleteOldChain(newChain.height - 10);
+							deleteOldChain(newChain.height);
 						}
 
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
@@ -732,7 +741,15 @@ class B {
 	static void loadBlockchain() throws NoSuchAlgorithmException, IOException, ClassNotFoundException,
 			InvalidKeyException, SignatureException, InvalidKeySpecException, InterruptedException {
 		String fileName = null;
-		x: for (long i = 1; i < Long.MAX_VALUE; i++) {
+		long i = 1;
+		if (new File(K.SNAPSHOT).exists()) {
+			U.d(2, "INFO: loading snapshot");
+			final Chain snapshot = loadChainFromFile(K.SNAPSHOT);
+			B.saveNewChain(snapshot);
+			B.bestChain = snapshot;
+			i = B.bestChain.height + 1;
+		}
+		x: for (; i < Long.MAX_VALUE; i++) {
 			for (int j = 1; j < 10; j++) {
 				fileName = getBlockFileName(i, j);
 				if (new File(fileName).exists()) {
