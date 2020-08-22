@@ -169,6 +169,7 @@ class B {
 				final Output output = new Output(C.getAddressOrPublicKey(pk, chain), balance);
 				fusionOutputs.add(output);
 				tx = new Transaction(fusionInputs, fusionOutputs, null);
+				tx.signature = null;
 				txBytesSize = U.serialize(tx).length;
 				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
 					fusionTx = (Transaction) U.deepCopy(tx);

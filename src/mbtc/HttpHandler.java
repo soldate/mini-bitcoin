@@ -148,6 +148,14 @@ class HttpHandler {
 				response += "{}]}";
 				break;
 
+			case "/net":
+				response = "{\"net\":[";
+				for (final SocketChannelWrapper c : N.p2pChannels) {
+					response += c + ", ";
+				}
+				response += "...]}";
+				break;
+
 			case "/users":
 				setJsonResponse(exchange);
 				response = "{\"users\":[";
