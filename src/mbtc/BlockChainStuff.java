@@ -413,10 +413,12 @@ class B {
 					if (tryRemoveLastTx) UTXO.remove(in.txHash);
 				}
 			}
-			final BigInteger txHash = C.sha(tx);
-			clone = (Transaction) U.deepCopy(tx);
-			clone.inputs = null; // utxo dont need inputs
-			UTXO.put(txHash, clone);
+			if (!(tx instanceof RemoveAddressTransaction)) {
+				final BigInteger txHash = C.sha(tx);
+				clone = (Transaction) U.deepCopy(tx);
+				clone.inputs = null; // utxo dont need inputs
+				UTXO.put(txHash, clone);
+			}
 		}
 	}
 
