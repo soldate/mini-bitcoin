@@ -31,7 +31,8 @@ Then
 
 ```
 cd mini-bitcoin/
-git pull
+git fetch origin
+git reset --hard origin/master
 docker build -t mbtc .
 docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
 ```
