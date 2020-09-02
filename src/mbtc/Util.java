@@ -81,6 +81,11 @@ class U {
 		return l;
 	}
 
+	static int hashCode(final PublicKey publickey) throws IOException {
+		if (BUG.HASHCODE_SOLVED) return C.sha(publickey).intValue();
+		else return publickey.hashCode();
+	}
+
 	static BigInteger int2BigInt(final int i) {
 		return new BigInteger(1, ByteBuffer.allocate(4).putInt(i).array());
 	}

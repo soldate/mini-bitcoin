@@ -64,7 +64,7 @@ class HttpHandler {
 
 		final List<Input> allMyMoney = B.getMoney(Main.me.getPublic(), B.bestChain);
 		final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
-		final Integer address = Main.me.getPublic().hashCode();
+		final Integer address = U.hashCode(Main.me.getPublic());
 
 		final String addressStr = Integer.toUnsignedString(address, 36).toUpperCase();
 		String response = page;
@@ -81,12 +81,13 @@ class HttpHandler {
 		return response;
 	}
 
-	private static String info(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+	private static String info(final PublicKey publicKey)
+			throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
 		String _ret = "{}";
 		if (publicKey != null) {
 			final Long balance = B.getBalance(publicKey);
 			final String pubkey = U.b64Encode(publicKey.getEncoded());
-			final Integer address = publicKey.hashCode();
+			final Integer address = U.hashCode(publicKey);
 			final PublicKey pkInBlockChain = B.bestChain.address2PublicKey.get(address);
 			final boolean isInBC = (pkInBlockChain != null);
 			final boolean isEquals = publicKey.equals(pkInBlockChain);
@@ -131,7 +132,7 @@ class HttpHandler {
 			// create your change
 			if (balance > qty) {
 				final Long change = balance - qty;
-				outputs.add(new Output(U.int2BigInt(Main.me.getPublic().hashCode()), change));
+				outputs.add(new Output(U.int2BigInt(U.hashCode(Main.me.getPublic())), change));
 			}
 
 			// always put all of your money (all possible inputs) to reduce UTXO size

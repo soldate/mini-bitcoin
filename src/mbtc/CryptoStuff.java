@@ -85,7 +85,7 @@ class C {
 				continue;
 			}
 
-			address = publicKey.hashCode();
+			address = U.hashCode(publicKey);
 			// if address already exists.. generate a new keypair
 			if (B.bestChain.address2PublicKey.containsKey(address)) {
 				publicKeyString = null;
@@ -93,7 +93,7 @@ class C {
 			}
 
 			// avoid bad address generation
-			addressString = Integer.toUnsignedString(address, 36);
+			addressString = Integer.toUnsignedString(address, 36).toUpperCase();
 			if (addressString.contains("O") || addressString.contains("0")) {
 				publicKeyString = null;
 				continue;
@@ -104,8 +104,8 @@ class C {
 		return keypair;
 	}
 
-	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final Chain chain) {
-		final int address = publicKey.hashCode();
+	static BigInteger getAddressOrPublicKey(final PublicKey publicKey, final Chain chain) throws IOException {
+		final int address = U.hashCode(publicKey);
 		if (chain.address2PublicKey.get(address) != null) {
 			return U.int2BigInt(address);
 		} else {

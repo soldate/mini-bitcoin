@@ -163,9 +163,9 @@ class Output extends MyObject implements Serializable {
 	public String toString(final Chain chain) {
 		try {
 			return "{\"output\":{\"address\":\""
-					+ Integer.toUnsignedString(getPublicKey(chain).hashCode(), 36).toUpperCase() + "\", \"value\":"
+					+ Integer.toUnsignedString(U.hashCode(getPublicKey(chain)), 36).toUpperCase() + "\", \"value\":"
 					+ value + "}}";
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
 			throw new RuntimeException(e.getMessage());
 		}
 	}

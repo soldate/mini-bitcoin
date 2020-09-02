@@ -92,6 +92,7 @@ public class Main {
 		final BufferedReader ttyReader = new BufferedReader(new InputStreamReader(System.in));
 
 		while (true) {
+
 			// Did user write some command?
 			if (ttyReader.ready() && !N.urgent()) {
 				userCommandHandler(ttyReader.readLine());

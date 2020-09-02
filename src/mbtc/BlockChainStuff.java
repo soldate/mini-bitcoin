@@ -59,7 +59,7 @@ class B {
 	}
 
 	private static void addressMapUpdate(final Chain newChain, final Block block)
-			throws InvalidKeySpecException, NoSuchAlgorithmException {
+			throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
 		for (final Transaction tx : block.txs) {
 			if (tx instanceof RemoveAddressTransaction) {
 				final RemoveAddressTransaction rtx = (RemoveAddressTransaction) tx;
@@ -67,12 +67,50 @@ class B {
 			} else if (tx.outputs != null) {
 				for (final Output out : tx.outputs) {
 					final PublicKey publickey = out.getPublicKey(newChain);
-					if (!newChain.address2PublicKey.containsKey(publickey.hashCode())) {
-						newChain.address2PublicKey.put(publickey.hashCode(), publickey);
+					if (!newChain.address2PublicKey.containsKey(U.hashCode(publickey))) {
+						newChain.address2PublicKey.put(U.hashCode(publickey), publickey);
 					}
 				}
 			}
 		}
+	}
+
+	// clone of createFusionTransaction
+	// bug: change address from publicKey.hashCode() to sha(publicKey).intValue()
+	private static Transaction bug_hashCode(final int totalSize, final List<Input> allInputs, final Chain chain)
+			throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException, SignatureException,
+			IOException, ClassNotFoundException {
+		int txBytesSize;
+		List<Input> txInputs;
+		final List<Input> fusionInputs = new ArrayList<Input>();
+		final List<Output> fusionOutputs = new ArrayList<Output>();
+		Transaction fusionTx = null;
+		Transaction tx = null;
+
+		for (final PublicKey pk : chain.address2PublicKey.values()) {
+			txInputs = B.getMoney(pk, chain);
+			if (txInputs != null && Collections.disjoint(allInputs, txInputs)) {
+				fusionInputs.addAll(txInputs);
+				final Long balance = getBalance(txInputs);
+				final Output output = new Output(U.publicKey2BigInteger(pk), balance); // HERE publicKey not address
+				fusionOutputs.add(output);
+				tx = new Transaction(fusionInputs, fusionOutputs, null);
+				tx.signature = null;
+				txBytesSize = U.serialize(tx).length;
+				if ((txBytesSize + totalSize) <= (K.MAX_BLOCK_SIZE - K.MIN_BLOCK_SIZE)) {
+					fusionTx = (Transaction) U.deepCopy(tx);
+				} else {
+					fusionInputs.removeAll(txInputs);
+					break;
+				}
+			}
+		}
+
+		if (fusionTx != null) {
+			allInputs.addAll(fusionInputs);
+		}
+
+		return fusionTx;
 	}
 
 	// are old outputs like new outputs?
@@ -212,13 +250,18 @@ class B {
 		}
 	}
 
-	private static Output devOutputReward(final long reward) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	private static Output devOutputReward(final long reward)
+			throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
 		final PublicKey devPK = C.getPublicKeyFromString(
 				"MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE0AnDrbR6jIqPE1msiN9n2asUCSOxMufdytQQtfvlXjyZQi8DJ2YWEt51MC2JzQFnT7RmYiNW85qTs6HCAKofYw==");
-		final int devAddress = devPK.hashCode();
+		final int devAddress = U.hashCode(devPK);
 		if (bestChain.address2PublicKey.containsKey(devAddress)) {
 			if (bestChain.address2PublicKey.get(devAddress).equals(devPK)) {
-				return new Output(U.int2BigInt(devAddress), reward);
+				if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+					return new Output(U.publicKey2BigInteger(devPK), reward);
+				} else {
+					return new Output(U.int2BigInt(devAddress), reward);
+				}
 			} else {
 				throw new RuntimeException(
 						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
@@ -237,6 +280,12 @@ class B {
 		final List<Input> allInputs = new ArrayList<Input>();
 		List<Input> txInputs = null;
 		final List<Transaction> toRemove = new ArrayList<Transaction>();
+
+		// bug: change address from publicKey.hashCode() to sha(publicKey).intValue()
+		if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+			txs.add(bug_hashCode(totalSize, allInputs, B.bestChain));
+			return txs;
+		}
 
 		// get from mempool
 		for (final Transaction tx : mempool) {
@@ -291,11 +340,15 @@ class B {
 		return (Chain) U.loadObjectFromFile(fileName);
 	}
 
-	private static Output myOutputReward(final long reward) {
-		final int myAddress = Main.me.getPublic().hashCode();
+	private static Output myOutputReward(final long reward) throws IOException {
+		final int myAddress = U.hashCode(Main.me.getPublic());
 		if (bestChain.address2PublicKey.containsKey(myAddress)) {
 			if (bestChain.address2PublicKey.get(myAddress).equals(Main.me.getPublic())) {
-				return new Output(U.int2BigInt(myAddress), reward);
+				if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+					return new Output(U.publicKey2BigInteger(Main.me.getPublic()), reward);
+				} else {
+					return new Output(U.int2BigInt(myAddress), reward);
+				}
 			} else {
 				throw new RuntimeException(
 						"Your address is in use. Please generate another keypair for you. Delete KeyPair folder.");
@@ -521,6 +574,11 @@ class B {
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
 							U.d(2, "INFO: new bestChain:" + newChain);
 							bestChain = newChain;
+
+							if (B.bestChain.height == BUG.HASHCODE_HEIGHT) {
+								BUG.HASHCODE_SOLVED = true;
+							}
+
 						} else {
 							if (persistChain)
 								U.d(2, "WARN: this new block is NOT to my best blockchain. chain: " + newChain);
