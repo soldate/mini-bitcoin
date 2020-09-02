@@ -72,12 +72,12 @@ Example:
 ```
 publicKey: MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEiCEOTeXDzM8lDlj21vmzQxzu9w6aN8f98uq3fSBwBQtL627QBvH0Rk8xsT9leiYtByp815SNPEcxS0cFXEm4IA==
 
-address: 4d744
+address: A1B2
 ```
 You can use (to send 1 mbtc):
 
 ```
-/send 1 4d744 
+/send 1 A1B2 
 ```
 
 Or (IF the publickey is not in the blockchain yet.)

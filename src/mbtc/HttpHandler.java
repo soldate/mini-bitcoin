@@ -49,7 +49,7 @@ class HttpHandler {
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
 		PublicKey toPublicKey = null;
 		if (addressStr.length() <= 6) {
-			final int toAddress = Integer.parseInt(addressStr, 36);
+			final int toAddress = Integer.parseUnsignedInt(addressStr, 36);
 			toPublicKey = B.bestChain.address2PublicKey.get(toAddress);
 		} else if (addressStr.length() == 120) {
 			toPublicKey = C.getPublicKeyFromString(addressStr);
@@ -66,7 +66,7 @@ class HttpHandler {
 		final long balance = allMyMoney != null ? B.getBalance(allMyMoney) : 0;
 		final Integer address = Main.me.getPublic().hashCode();
 
-		final String addressStr = Integer.toString(address, 36).toUpperCase();
+		final String addressStr = Integer.toUnsignedString(address, 36).toUpperCase();
 		String response = page;
 		final PublicKey p = B.bestChain.address2PublicKey.get(address);
 		final boolean isValidKey = (p != null) ? p.equals(Main.me.getPublic()) : false;
@@ -160,7 +160,7 @@ class HttpHandler {
 	private static String users() throws InvalidKeySpecException, NoSuchAlgorithmException {
 		String response = "{\"users\":[";
 		for (final Integer i : B.bestChain.address2PublicKey.keySet()) {
-			response += "\"" + Integer.toString(i, 36).toUpperCase() + "=" + B.getBalance(i) + "\", ";
+			response += "\"" + Integer.toUnsignedString(i, 36).toUpperCase() + "=" + B.getBalance(i) + "\", ";
 		}
 		response += "\"...\"]}";
 		return response;
