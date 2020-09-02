@@ -178,7 +178,7 @@ public class Main {
 
 			// log 1, 2 or 3. 3=Very verbose
 			case "/log":
-				U.logVerbosityLevel = Integer.parseInt(args[1]);
+				U.logVerbosityLevel = Integer.parseUnsignedInt(args[1]);
 				U.w("------ verbosity " + U.logVerbosityLevel + " ------");
 				break;
 

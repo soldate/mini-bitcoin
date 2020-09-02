@@ -93,7 +93,7 @@ class C {
 			}
 
 			// avoid bad address generation
-			addressString = Integer.toString(address, 36);
+			addressString = Integer.toUnsignedString(address, 36);
 			if (addressString.contains("O") || addressString.contains("0")) {
 				publicKeyString = null;
 				continue;
