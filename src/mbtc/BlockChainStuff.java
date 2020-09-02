@@ -634,7 +634,7 @@ class B {
 
 	static Long getBalance(final Integer address, final Chain chain)
 			throws InvalidKeySpecException, NoSuchAlgorithmException {
-		return B.getBalance(B.getMoney(C.getPublicKey(U.int2BigInt(address), chain), chain));
+		return B.getBalance(B.getMoney(chain.address2PublicKey.get(address), chain));
 	}
 
 	static long getBalance(final List<Input> inputs) {

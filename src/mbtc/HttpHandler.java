@@ -13,11 +13,6 @@ class HttpHandler {
 
 	private static String page;
 
-	private static String balance(final PublicKey publicKey) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	private static String block(final String blockName) throws IOException, ClassNotFoundException {
 		String response = "{}";
 		final String fileName = K.BLOCK_FOLDER + blockName;
@@ -82,8 +77,26 @@ class HttpHandler {
 
 		response = response.replace("#balance", "" + balance);
 		response = response.replace("#address", addressStr + msg);
-		response = response.replace("#publickey", Base64.getEncoder().encodeToString(Main.me.getPublic().getEncoded()));
+		response = response.replace("#publickey", U.b64Encode(Main.me.getPublic().getEncoded()));
 		return response;
+	}
+
+	private static String info(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		String _ret = "{}";
+		if (publicKey != null) {
+			final Long balance = B.getBalance(publicKey);
+			final String pubkey = U.b64Encode(publicKey.getEncoded());
+			final Integer address = publicKey.hashCode();
+			final PublicKey pkInBlockChain = B.bestChain.address2PublicKey.get(address);
+			final boolean isInBC = (pkInBlockChain != null);
+			final boolean isEquals = publicKey.equals(pkInBlockChain);
+			_ret = "{\"address\":\"" + address + "\", \"balance\":" + balance + ", \"isInBC\":" + isInBC
+					+ ", \"isEquals\":" + isEquals + ", \"pubkey\":\"" + pubkey + "\"}";
+		} else {
+
+		}
+
+		return _ret;
 	}
 
 	private static String net() {
@@ -221,9 +234,9 @@ class HttpHandler {
 				response = users();
 				break;
 
-			case "/balance":
+			case "/info":
 				setJsonResponse(exchange);
-				response = balance(getPublicKey(cmd[1]));
+				response = info(getPublicKey(cmd[1]));
 				break;
 
 			default:

@@ -24,6 +24,14 @@ class U {
 		System.out.println(U.simpleDateFormat.format(new Date()) + ": " + o.toString());
 	}
 
+	static byte[] b64Decode(final String str) {
+		return Base64.getDecoder().decode(str);
+	}
+
+	static String b64Encode(final byte[] bytes) {
+		return Base64.getEncoder().encodeToString(bytes);
+	}
+
 	static void cleanFolder(final String dir) {
 		final File index = new File(dir);
 		if (!index.exists()) {

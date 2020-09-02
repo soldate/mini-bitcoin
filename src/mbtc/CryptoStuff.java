@@ -39,12 +39,6 @@ class C {
 		return kf.generatePrivate(spec);
 	}
 
-	private static PublicKey getPublicKey(final byte[] keyBytes)
-			throws InvalidKeySpecException, NoSuchAlgorithmException {
-		final BigInteger address = new BigInteger(1, keyBytes);
-		return getPublicKey(address, B.bestChain);
-	}
-
 	private static PublicKey getPublicKeyFromFile(final String filename)
 			throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
@@ -81,7 +75,7 @@ class C {
 		while (publicKeyString == null) {
 			keypair = generateKeyPair();
 			publicKey = keypair.getPublic();
-			publicKeyString = Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded());
+			publicKeyString = U.b64Encode(keypair.getPublic().getEncoded());
 
 			// if publicKey string is not good.. generate a new keypair
 			if (publicKeyString.contains("/") || publicKeyString.contains("+")) {
@@ -126,10 +120,10 @@ class C {
 		return kf.generatePublic(spec);
 	}
 
-	static PublicKey getPublicKeyFromString(final String publicKeyOrAddressString)
+	static PublicKey getPublicKeyFromString(final String publicKey)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
-		final byte[] keyBytes = Base64.getDecoder().decode(publicKeyOrAddressString);
-		return getPublicKey(keyBytes);
+		final byte[] keyBytes = U.b64Decode(publicKey);
+		return getPublicKeyFromBytes(keyBytes);
 	}
 
 	static void loadOrCreateKeyPair()
