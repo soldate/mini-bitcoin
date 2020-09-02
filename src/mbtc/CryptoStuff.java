@@ -70,6 +70,8 @@ class C {
 		KeyPair keypair = null;
 		PublicKey publicKey = null;
 		String publicKeyString = null;
+		Integer address = null;
+		String addressString = null;
 
 		// generate key until find an "easy to write" address
 		while (publicKeyString == null) {
@@ -83,8 +85,16 @@ class C {
 				continue;
 			}
 
+			address = publicKey.hashCode();
 			// if address already exists.. generate a new keypair
-			if (B.bestChain.address2PublicKey.containsKey(publicKey.hashCode())) {
+			if (B.bestChain.address2PublicKey.containsKey(address)) {
+				publicKeyString = null;
+				continue;
+			}
+
+			// avoid bad address generation
+			addressString = Integer.toString(address, 36);
+			if (addressString.contains("O") || addressString.contains("0")) {
 				publicKeyString = null;
 				continue;
 			}

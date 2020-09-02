@@ -162,7 +162,7 @@ class Output extends MyObject implements Serializable {
 	@Override
 	public String toString(final Chain chain) {
 		try {
-			return "{\"output\":{\"address\":\"" + Integer.toHexString(getPublicKey(chain).hashCode())
+			return "{\"output\":{\"address\":\"" + Integer.toString(getPublicKey(chain).hashCode(), 36).toUpperCase()
 					+ "\", \"value\":" + value + "}}";
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new RuntimeException(e.getMessage());
