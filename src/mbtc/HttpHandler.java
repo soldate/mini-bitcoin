@@ -48,7 +48,7 @@ class HttpHandler {
 	private static PublicKey getPublicKey(final String addressStr)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
 		PublicKey toPublicKey = null;
-		if (addressStr.length() <= 6) {
+		if (addressStr.length() <= 4) {
 			final int toAddress = Integer.parseInt(addressStr, 36);
 			toPublicKey = B.bestChain.address2PublicKey.get(toAddress);
 		} else if (addressStr.length() == 120) {
