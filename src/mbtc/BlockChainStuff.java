@@ -647,6 +647,10 @@ class B {
 		return balance;
 	}
 
+	static Long getBalance(final PublicKey publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		return B.getBalance(B.getMoney(publicKey, B.bestChain));
+	}
+
 	static Block getBlock(final BigInteger blockHash) throws ClassNotFoundException, IOException {
 		final Chain chain = loadChain(blockHash);
 		for (int j = 1; j < 10; j++) {
