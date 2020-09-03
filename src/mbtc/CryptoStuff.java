@@ -147,7 +147,7 @@ class C {
 		}
 	}
 
-	static BigInteger sha(final Object o) throws IOException {
+	static synchronized BigInteger sha(final Object o) throws IOException {
 
 		BigInteger hash = null;
 
