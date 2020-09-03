@@ -121,7 +121,8 @@ public class Main {
 		final long secondsFromLastBlock = (now - N.lastAddBlock) / 1000;
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 
-		if (secondsFromLastBlock > 10 && !startMining && N.amIConnected()) { // More than 10s without receive blocks
+		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
+														// blocks
 			U.d(1, "INFO: Starting mining...");
 			startMining = true;
 
