@@ -2,6 +2,7 @@ package mbtc;
 
 class K {
 	// To create your own coin, change PORT, GENESIS_MSG, SEEDS (URLs) and set START_TIME as a fixed timestamp.
+	// Got to BUG class and set HEIGHT = -1 and SOLVED = true
 	// --------------------------------------------
 	static boolean DEBUG_MODE = true; // show messages
 	static int P2P_PORT = 10762;
@@ -10,7 +11,7 @@ class K {
 	static final long START_TIME = 1596835137176L; // System.currentTimeMillis();
 	// "seed" for docker-compose network test. replaced to localhost in one machine (local test)
 	// static String[] SEEDS = { "seed" }; // for local test or docker-compose test
-	static String[] SEEDS = {};// "64.227.25.70" };
+	static String[] SEEDS = { "64.227.25.70" };
 	// --------------------------------------------
 	static final long BLOCK_TIME = 10 * 60 * 1000; // 10 minutes
 	static final long REWARD = 50;
@@ -23,8 +24,8 @@ class K {
 	static final String KEY_FOLDER = "data/keypair/";
 	static final String SNAPSHOT = "data/snapshot";
 
-	// bigger value means more mining attempts and slow terminal (and net) response to user.
-	static final long MINE_ROUND = 50 * 10000;
+	// bigger value means more mining attempts and slow terminal (and net) response.
+	static final long MINE_ROUND = 500 * 1000;
 
 	// target is how difficulty is manipulated. find hash starting with bits 0010 (=2) is harder than 0100 (=4)
 	// In another words, smaller target means more difficult to find the block (valid hash)

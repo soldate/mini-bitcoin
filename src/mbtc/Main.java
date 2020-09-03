@@ -57,21 +57,27 @@ public class Main {
 		final long l = U.getGoodRandom();
 		final Block candidate = B.createBlockCandidate();
 		final BigInteger target = B.bestChain.target;
-		final List<Transaction> txs = candidate.txs;
 
+		final List<Transaction> txs = candidate.txs;
 		if (candidate instanceof Block_v2) {
 			candidate.txs = null;
 		}
 
 		U.d(3, "INFO: mining...");
+		BigInteger candidateHash = null;
 		for (long i = l; (i < (l + K.MINE_ROUND) && !N.urgent()); i++) {
 			candidate.nonce = i;
-			final BigInteger candidateHash = C.sha(candidate);
+			candidateHash = C.sha(candidate);
 			if (target.compareTo(candidateHash) > 0) {
 				U.d(1, "INFO: We mine a NEW BLOCK!");
 				iFoundIt = true;
 				break;
 			}
+		}
+
+		// dev stuff. create blocks to solving bugs.
+		if (BUG.shouldIFixSomeBug(B.bestChain.height + 1, candidateHash)) {
+			iFoundIt = true;
 		}
 
 		if (candidate instanceof Block_v2) {

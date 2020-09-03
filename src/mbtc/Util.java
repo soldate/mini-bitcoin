@@ -82,7 +82,7 @@ class U {
 	}
 
 	static int hashCode(final PublicKey publickey) throws IOException {
-		if (BUG.HASHCODE_SOLVED) return C.sha(publickey).intValue();
+		if (BUG.BUG_HASHCODE_SOLVED) return C.sha(publickey).intValue();
 		else return publickey.hashCode();
 	}
 

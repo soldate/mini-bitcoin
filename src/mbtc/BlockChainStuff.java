@@ -58,23 +58,6 @@ class B {
 		}
 	}
 
-	private static void addressMapUpdate(final Chain newChain, final Block block)
-			throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
-		for (final Transaction tx : block.txs) {
-			if (tx instanceof RemoveAddressTransaction) {
-				final RemoveAddressTransaction rtx = (RemoveAddressTransaction) tx;
-				newChain.address2PublicKey.remove(rtx.address);
-			} else if (tx.outputs != null) {
-				for (final Output out : tx.outputs) {
-					final PublicKey publickey = out.getPublicKey(newChain);
-					if (!newChain.address2PublicKey.containsKey(U.hashCode(publickey))) {
-						newChain.address2PublicKey.put(U.hashCode(publickey), publickey);
-					}
-				}
-			}
-		}
-	}
-
 	// clone of createFusionTransaction
 	// bug: change address from publicKey.hashCode() to sha(publicKey).intValue()
 	private static Transaction bug_hashCode(final int totalSize, final List<Input> allInputs, final Chain chain)
@@ -257,7 +240,7 @@ class B {
 		final int devAddress = U.hashCode(devPK);
 		if (bestChain.address2PublicKey.containsKey(devAddress)) {
 			if (bestChain.address2PublicKey.get(devAddress).equals(devPK)) {
-				if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+				if (B.bestChain.height + 1 == BUG.BUG_HASHCODE_HEIGHT) {
 					return new Output(U.publicKey2BigInteger(devPK), reward);
 				} else {
 					return new Output(U.int2BigInt(devAddress), reward);
@@ -282,7 +265,7 @@ class B {
 		final List<Transaction> toRemove = new ArrayList<Transaction>();
 
 		// bug: change address from publicKey.hashCode() to sha(publicKey).intValue()
-		if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+		if (B.bestChain.height + 1 == BUG.BUG_HASHCODE_HEIGHT) {
 			txs.add(bug_hashCode(totalSize, allInputs, B.bestChain));
 			return txs;
 		}
@@ -344,7 +327,7 @@ class B {
 		final int myAddress = U.hashCode(Main.me.getPublic());
 		if (bestChain.address2PublicKey.containsKey(myAddress)) {
 			if (bestChain.address2PublicKey.get(myAddress).equals(Main.me.getPublic())) {
-				if (B.bestChain.height + 1 == BUG.HASHCODE_HEIGHT) {
+				if (B.bestChain.height + 1 == BUG.BUG_HASHCODE_HEIGHT) {
 					return new Output(U.publicKey2BigInteger(Main.me.getPublic()), reward);
 				} else {
 					return new Output(U.int2BigInt(myAddress), reward);
@@ -368,9 +351,13 @@ class B {
 		// work = 2^countBitsZero + (target-hash). Im NOT sure if this calc is the right thing to do.
 		// more zero bits = more work
 		// less block hash = more work
-		newChain.chainWork = newChain.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
-		newChain.chainWork = newChain.chainWork.add(newChain.target);
-		newChain.chainWork = newChain.chainWork.subtract(blockHash);
+		if (BUG.passWork(newChain.height, blockHash)) {
+			newChain.chainWork = newChain.chainWork.add(new BigInteger("1"));
+		} else {
+			newChain.chainWork = newChain.chainWork.add(BigInteger.TWO.pow(U.countBitsZero(blockHash)));
+			newChain.chainWork = newChain.chainWork.add(newChain.target);
+			newChain.chainWork = newChain.chainWork.subtract(blockHash);
+		}
 
 		if (targetAdjustment(block, newChain) < 1) {
 			newChain.target = newChain.target.add(newChain.target.shiftRight(5));
@@ -466,6 +453,8 @@ class B {
 					if (tryRemoveLastTx) UTXO.remove(in.txHash);
 				}
 			}
+		}
+		for (final Transaction tx : block.txs) {
 			if (!(tx instanceof RemoveAddressTransaction)) {
 				final BigInteger txHash = C.sha(tx);
 				clone = (Transaction) U.deepCopy(tx);
@@ -507,7 +496,7 @@ class B {
 			U.d(2, "INFO: trying add BLOCK:" + block);
 
 			// if the work was done, check transactions
-			if (chain.target.compareTo(blockHash) > 0) {
+			if (chain.target.compareTo(blockHash) > 0 || BUG.passWork(chain.height + 1, blockHash)) {
 				if (block.txs != null) { // null == not even coinbase tx??
 
 					boolean blockContainsRemoveAddress = false;
@@ -567,6 +556,7 @@ class B {
 						}
 
 						if (persistChain) {
+							BUG.afterAddBlock(block, newChain);
 							saveNewChain(newChain);
 							deleteOldChain(newChain.height);
 						}
@@ -574,10 +564,6 @@ class B {
 						if (persistChain && newChain.chainWork.compareTo(bestChain.chainWork) > 0) {
 							U.d(2, "INFO: new bestChain:" + newChain);
 							bestChain = newChain;
-
-							if (B.bestChain.height == BUG.HASHCODE_HEIGHT) {
-								BUG.HASHCODE_SOLVED = true;
-							}
 
 						} else {
 							if (persistChain)
@@ -621,6 +607,23 @@ class B {
 	static boolean addChain(final Block block) throws InvalidKeyException, SignatureException, ClassNotFoundException,
 			IOException, InvalidKeySpecException, NoSuchAlgorithmException, InterruptedException {
 		return addBlock(block, false, true, null);
+	}
+
+	static void addressMapUpdate(final Chain newChain, final Block block)
+			throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+		for (final Transaction tx : block.txs) {
+			if (tx instanceof RemoveAddressTransaction) {
+				final RemoveAddressTransaction rtx = (RemoveAddressTransaction) tx;
+				newChain.address2PublicKey.remove(rtx.address);
+			} else if (tx.outputs != null) {
+				for (final Output out : tx.outputs) {
+					final PublicKey publickey = out.getPublicKey(newChain);
+					if (!newChain.address2PublicKey.containsKey(U.hashCode(publickey))) {
+						newChain.address2PublicKey.put(U.hashCode(publickey), publickey);
+					}
+				}
+			}
+		}
 	}
 
 	static boolean addTx2MemPool(final Transaction tx) {
