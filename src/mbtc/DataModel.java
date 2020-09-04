@@ -162,7 +162,7 @@ class Output extends MyObject implements Serializable {
 	@Override
 	public String toString(final Chain chain) {
 		try {
-			return "{\"output\":{\"address\":\""
+			return "{\"output\":{\"address\":\"" + (U.isInteger32bits(addressOrPublicKey) ? "(addr) " : "(pubkey) ")
 					+ Integer.toUnsignedString(U.hashCode(getPublicKey(chain)), 36).toUpperCase() + "\", \"value\":"
 					+ value + "}}";
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
@@ -173,6 +173,7 @@ class Output extends MyObject implements Serializable {
 	PublicKey getPublicKey(final Chain chain) throws InvalidKeySpecException, NoSuchAlgorithmException {
 		return C.getPublicKey(addressOrPublicKey, chain);
 	}
+
 }
 
 // "garbage collector"
