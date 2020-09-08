@@ -532,7 +532,7 @@ class B {
 						}
 					}
 
-					if (chain.height > 1232 && !blockContainsRemoveAddress) {
+					if (chain.height > 1234 && !blockContainsRemoveAddress) {
 						final List<Transaction> l = new ArrayList<Transaction>();
 						addRemoveAddressTransactions(l, U.serialize(block).length);
 						if (l.size() > 0) {

@@ -81,6 +81,10 @@ class Chain extends MyObject implements Serializable {
 	public String toString(final Chain chain) {
 		return toString();
 	}
+
+	Block getLastBlock() throws ClassNotFoundException, IOException {
+		return B.getBlock(blockHash);
+	}
 }
 
 class GiveMeABlockMessage implements Serializable {
