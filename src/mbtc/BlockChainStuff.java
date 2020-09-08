@@ -814,6 +814,7 @@ class B {
 			U.d(2, "INFO: loading snapshot");
 			final Chain snapshot = loadChainFromFile(K.SNAPSHOT);
 			B.saveNewChain(snapshot);
+			BUG.snapshotLoading(snapshot.height);
 			B.bestChain = snapshot;
 			i = B.bestChain.height + 1;
 		}

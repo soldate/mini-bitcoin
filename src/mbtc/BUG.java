@@ -17,6 +17,12 @@ public class BUG {
 		// renameBlocks();
 	}
 
+	public static void snapshotLoading(final long height) {
+		if (height >= BUG_HASHCODE_HEIGHT) {
+			BUG_HASHCODE_SOLVED = true;
+		}
+	}
+
 	private static void cleanOrphanBlocks() throws InvalidKeyException, NoSuchAlgorithmException,
 			ClassNotFoundException, SignatureException, InvalidKeySpecException, IOException, InterruptedException {
 		B.loadBlockchain();
