@@ -5,6 +5,7 @@ import java.math.*;
 import java.security.*;
 import java.security.spec.*;
 
+// class to easily create blocks to solve really important bugs
 public class BUG {
 
 	static long BUG_HASHCODE_HEIGHT = 3420;
