@@ -23,8 +23,10 @@ public class Main {
 	// my user = my public and private key
 	static KeyPair me;
 
+	static long startTime = System.currentTimeMillis();
+
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
-	public static void main(final String[] args) {
+	public static void main(final String[] args) throws IOException {
 		try {
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
@@ -43,10 +45,10 @@ public class Main {
 			// "while(true)" inside
 			runForever();
 
-		} catch (IOException | InterruptedException | NoSuchAlgorithmException | InvalidKeySpecException
-				| ClassNotFoundException | InvalidKeyException | SignatureException
-				| InvalidAlgorithmParameterException e) {
-			e.printStackTrace();
+		} catch (final Exception e) {
+			// git update and run it again
+			U.d(1, e.getMessage());
+			Runtime.getRuntime().exec("java -cp ./bin mbtc.Update");
 		}
 	}
 
@@ -92,8 +94,7 @@ public class Main {
 	}
 
 	// Async! Read terminal, send/receive networks messages, mine a little bit and do it all again and again.
-	private static void runForever() throws InterruptedException, IOException, InvalidKeyException, SignatureException,
-			ClassNotFoundException, InvalidKeySpecException, NoSuchAlgorithmException {
+	private static void runForever() throws Exception {
 
 		final BufferedReader ttyReader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -122,10 +123,13 @@ public class Main {
 		}
 	}
 
-	private static void shouldIDoSomethingNow() throws IOException, InterruptedException {
+	private static void shouldIDoSomethingNow() throws Exception {
 		final long now = System.currentTimeMillis();
 		final long secondsFromLastBlock = (now - N.lastAddBlock) / 1000;
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
+		final long secondsFromStartTime = (now - startTime) / 1000;
+
+		if (secondsFromStartTime > 60) throw new Exception("update");
 
 		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
 														// blocks
