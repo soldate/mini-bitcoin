@@ -5,6 +5,7 @@ import java.math.*;
 import java.security.*;
 import java.security.spec.*;
 
+// class to easily create blocks to solve really important bugs
 public class BUG {
 
 	static long BUG_HASHCODE_HEIGHT = 3420;
@@ -59,7 +60,7 @@ public class BUG {
 	}
 
 	private static void renameBlocks() {
-		for (long i = 1; i < 4000; i++) {
+		for (long i = 1; i < 7000; i++) {
 			for (int j = 2; j < 10; j++) {
 				final String fileName = B.getBlockFileName(i, j);
 				if (new File(fileName).exists()) {

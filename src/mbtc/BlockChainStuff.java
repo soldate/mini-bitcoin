@@ -167,8 +167,9 @@ class B {
 	private static void createCoinbase(final Block candidate) throws InvalidKeyException, SignatureException,
 			IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		final List<Output> outputs = new ArrayList<Output>();
-		outputs.add(myOutputReward(K.REWARD / 2));
-		outputs.add(devOutputReward(K.REWARD / 2));
+		outputs.add(myOutputReward(K.REWARD));
+		// outputs.add(myOutputReward(K.REWARD / 2));
+		// outputs.add(devOutputReward(K.REWARD / 2));
 		candidate.txs.add(new Transaction(null, outputs, "Coinbase"));
 	}
 
