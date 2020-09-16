@@ -12,6 +12,8 @@ public class Update {
 		p.waitFor();
 		p = Runtime.getRuntime().exec("git reset --hard origin/master");
 		p.waitFor();
+		Runtime.getRuntime().exec("javac -cp ./src/ ./src/mbtc/*.java -d ./bin");
+		p.waitFor();
 		Runtime.getRuntime().exec("java -cp ./bin mbtc.Main");
 		U.d(1, "running again...");
 	}

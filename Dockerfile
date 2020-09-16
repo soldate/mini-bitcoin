@@ -1,6 +1,5 @@
 FROM openjdk:11
 MAINTAINER Marconi Soldate
-RUN cd /
 RUN apt update
 RUN apt install -y git
 ADD https://www.unixtimestamp.com /tmp
