@@ -23,11 +23,13 @@ public class Main {
 	// my user = my public and private key
 	static KeyPair me;
 
-	static long startTime = System.currentTimeMillis();
+	static long startTime;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) throws IOException {
 		try {
+			startTime = System.currentTimeMillis();
+
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
