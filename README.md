@@ -2,7 +2,7 @@
 > Minimal Bitcoin Protocol in Java (Satoshi White Paper, not Bitcoin Core)
 
 ## Description
-Just small 8 java files. Only standard java library.
+Minimal Bitcoin Protocol. Only standard java library.
 
 Wallet(Private and Public keys), Blockchain, Miner, P2P (Server and client), RPC(http).. all ready.
 
@@ -10,16 +10,10 @@ Wallet(Private and Public keys), Blockchain, Miner, P2P (Server and client), RPC
 
 ## Requirements
 
-You need install to run
-* git
-* docker
+* Git
+* Docker
 
-and (for developers)
-* Java
-* Eclipse IDE (recommended)
-* docker-compose (recommended)
-
-## How To GO (Mine / Run)
+## How To
 
 For the first time, do
 
@@ -34,36 +28,15 @@ cd mini-bitcoin/
 git fetch origin
 git reset --hard origin/master
 docker build -t mbtc .
-docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/tmp/data" --rm mbtc
+docker run -it -p 10762:10762 -p 8080:8080 -v "${PWD}/data:/mini-bitcoin/data" --rm mbtc
 ```
 
 Go to [http://localhost:8080](http://localhost:8080)
 
 That's it! :-D
 
-## Understanding the code - For developers
-
-Inside mbtc.Main you get the "main method" starting point.
-
-Put a breakpoint in the first line and go debugging. :-)
-
-## Docker-compose
-This commands below will start two nodes, so you can check how the peers exchange messages. 
-
-``` 
-$ docker-compose build
-$ docker-compose up
-```
-
-After this, maybe you want to start another peer in your favorite IDE for debugging.
-
-To stop, type in another terminal
-
-``` 
-$ docker-compose down
-```
-
 ## What is address?
+
 It's just a shortcut to the public key. Once your public key is on the blockchain, you will receive coins using small 
 address, instead of use the large public key.
 

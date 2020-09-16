@@ -25,7 +25,7 @@ class K {
 	static final String SNAPSHOT = "data/snapshot";
 
 	// bigger value means more mining attempts and slow terminal (and net) response.
-	static final long MINE_ROUND = 500 * 1000;
+	static final long MINE_ROUND = 50 * 1000;
 
 	// target is how difficulty is manipulated. find hash starting with bits 0010 (=2) is harder than 0100 (=4)
 	// In another words, smaller target means more difficult to find the block (valid hash)
