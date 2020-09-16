@@ -26,7 +26,7 @@ public class Main {
 	static long startTime;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
-	public static void main(final String[] args) throws IOException {
+	public static void main(final String[] args) throws IOException, InterruptedException {
 		try {
 			startTime = System.currentTimeMillis();
 
@@ -50,7 +50,7 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
-			Runtime.getRuntime().exec("java -cp ./bin mbtc.Update");
+			Update.main(null);
 		}
 	}
 
