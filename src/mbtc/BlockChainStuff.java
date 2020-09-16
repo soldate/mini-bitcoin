@@ -226,10 +226,15 @@ class B {
 			}
 			// if only one block at that height, save snapshot
 			if (j == 2) {
-				final File snapshot = new File(K.SNAPSHOT);
-				if (snapshot.exists()) snapshot.delete();
 
-				new File(K.UTXO_FOLDER + C.sha(b)).renameTo(new File(K.SNAPSHOT));
+				final File lastUTXO = new File(K.UTXO_FOLDER + C.sha(b));
+				if (lastUTXO.exists()) {
+					final File snapshot = new File(K.SNAPSHOT);
+					if (snapshot.exists()) snapshot.delete();
+
+					lastUTXO.renameTo(new File(K.SNAPSHOT));
+				} else U.d(1, "WARN: NO SNAPSHOT");
+
 			}
 		}
 	}
