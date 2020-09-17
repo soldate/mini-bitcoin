@@ -325,10 +325,6 @@ class B {
 		return inputList;
 	}
 
-	private static Chain loadChainFromFile(final String fileName) throws IOException, ClassNotFoundException {
-		return (Chain) U.loadObjectFromFile(fileName);
-	}
-
 	private static Output myOutputReward(final long reward) throws IOException {
 		final int myAddress = U.hashCode(Main.me.getPublic());
 		if (bestChain.address2PublicKey.containsKey(myAddress)) {
@@ -844,5 +840,9 @@ class B {
 
 	static Chain loadChain(final BigInteger blockHash) throws IOException, ClassNotFoundException {
 		return loadChainFromFile(K.UTXO_FOLDER + blockHash);
+	}
+
+	static Chain loadChainFromFile(final String fileName) throws IOException, ClassNotFoundException {
+		return (Chain) U.loadObjectFromFile(fileName);
 	}
 }

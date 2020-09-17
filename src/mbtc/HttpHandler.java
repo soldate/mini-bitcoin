@@ -23,12 +23,20 @@ class HttpHandler {
 		return response;
 	}
 
-	private static String blocks() {
+	private static String blocks() throws ClassNotFoundException, IOException {
+
+		long i = 1;
+		if (new File(K.SNAPSHOT).exists()) {
+			U.d(2, "INFO: loading snapshot");
+			final Chain snapshot = B.loadChainFromFile(K.SNAPSHOT);
+			i = snapshot.height;
+		}
+
 		String fileName = null;
 		String blockName = null;
 		String response = "{\"blocks\":[";
 
-		x: for (long i = 1; i < Long.MAX_VALUE; i++) {
+		x: for (; i < Long.MAX_VALUE; i++) {
 			for (long j = 1; j < 10; j++) {
 				blockName = String.format("%012d", i) + "_" + j + ".block";
 				fileName = K.BLOCK_FOLDER + blockName;
@@ -101,11 +109,11 @@ class HttpHandler {
 	}
 
 	private static String net() {
-		String response = "{\"net\":[";
+		String response = "{\"net\":[\"";
 		for (final SocketChannelWrapper c : N.p2pChannels) {
-			response += c + ", ";
+			response += c + "\", \"";
 		}
-		response += "...]}";
+		response += "...\"]}";
 		return response;
 	}
 
