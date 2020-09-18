@@ -8,14 +8,29 @@ public class Update {
 	public static void main(final String[] args) throws IOException, InterruptedException {
 		Process p = null;
 		U.d(1, "updating...");
-		p = Runtime.getRuntime().exec("git fetch origin");
+
+		p = exec(new String[] { "/bin/bash", "-c", "git fetch origin" });
 		p.waitFor();
-		p = Runtime.getRuntime().exec("git reset --hard origin/master");
+
+		p = exec(new String[] { "/bin/bash", "-c", "git reset --hard origin/master" });
 		p.waitFor();
-		Runtime.getRuntime().exec("javac -cp ./src/ ./src/mbtc/*.java -d ./bin");
+
+		p = exec(new String[] { "/bin/bash", "-c", "javac -cp ./src/ ./src/mbtc/*.java -d ./bin" });
 		p.waitFor();
-		Runtime.getRuntime().exec("java -cp ./bin mbtc.Main");
+
+		p = exec(new String[] { "/bin/bash", "-c", "java -cp ./bin mbtc.Main" });
+
 		U.d(1, "running again...");
+	}
+
+	private static Process exec(final String[] command) throws IOException {
+		Process p = null;
+		ProcessBuilder builder = null;
+		builder = new ProcessBuilder(command);
+		builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+		builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+		p = builder.start();
+		return p;
 	}
 
 }
