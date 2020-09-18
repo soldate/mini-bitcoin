@@ -50,7 +50,7 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
-			Update.main(null);
+			U.exec("java -cp ./bin mbtc.Update");
 		}
 	}
 

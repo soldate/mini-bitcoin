@@ -71,6 +71,16 @@ class U {
 		return is.readObject();
 	}
 
+	static Process exec(final String command) throws IOException {
+		Process p = null;
+		ProcessBuilder builder = null;
+		builder = new ProcessBuilder(new String[] { "/bin/bash", "-c", command });
+		builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+		builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+		p = builder.start();
+		return p;
+	}
+
 	static long getGoodRandom() {
 		long l = random.nextLong();
 		// Long.MAX_VALUE + 1 is a negative number
