@@ -131,7 +131,8 @@ public class Main {
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 		final long secondsFromStartTime = (now - startTime) / 1000;
 
-		if (secondsFromStartTime > 60) throw new Exception("update");
+		// update after one hour
+		if (secondsFromStartTime > 3600) throw new Exception("update");
 
 		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
 														// blocks
