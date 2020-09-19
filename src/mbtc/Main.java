@@ -23,12 +23,13 @@ public class Main {
 	// my user = my public and private key
 	static KeyPair me;
 
-	static long startTime;
+	static long startTime = System.currentTimeMillis();
+
+	static HttpServer server;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) throws IOException, InterruptedException {
 		try {
-			startTime = System.currentTimeMillis();
 
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
@@ -50,8 +51,8 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
+			if (server != null) server.stop(1);
 			U.exec("java -cp ./bin mbtc.Update");
-			System.exit(0);
 		}
 	}
 
@@ -133,7 +134,7 @@ public class Main {
 		final long secondsFromStartTime = (now - startTime) / 1000;
 
 		// update after one hour
-		if (secondsFromStartTime > 3600) throw new Exception("update");
+		//if (secondsFromStartTime > 3600) throw new Exception("update");
 
 		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
 														// blocks
@@ -168,7 +169,7 @@ public class Main {
 	}
 
 	private static void startHttpServer() throws IOException {
-		final HttpServer server = HttpServer.create(new InetSocketAddress(K.RPC_PORT), 0);
+		server = HttpServer.create(new InetSocketAddress(K.RPC_PORT), 0);
 		final HttpContext context = server.createContext("/");
 		context.setHandler(HttpHandler::handleRequest);
 		server.start();
