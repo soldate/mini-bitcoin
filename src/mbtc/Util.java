@@ -1,6 +1,7 @@
 package mbtc;
 
 import java.io.*;
+import java.lang.ProcessBuilder.*;
 import java.math.*;
 import java.nio.*;
 import java.nio.file.*;
@@ -11,7 +12,7 @@ import java.util.*;
 // U = Util
 class U {
 
-	static int logVerbosityLevel = 1;
+	static int logVerbosityLevel = -1;
 	static final SecureRandom random = new SecureRandom();
 	static SimpleDateFormat simpleDateFormat;
 	static BigInteger MAX_BIG = BigInteger.ONE.shiftLeft(255);
@@ -75,9 +76,9 @@ class U {
 		Process p = null;
 		ProcessBuilder builder = null;
 		builder = new ProcessBuilder(new String[] { "/bin/bash", "-c", command });
-		builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-		builder.redirectError(ProcessBuilder.Redirect.INHERIT);
-		p = builder.start();
+		builder.redirectInput(Redirect.INHERIT);
+		builder.redirectOutput(Redirect.INHERIT);
+		p = builder.inheritIO().start();
 		return p;
 	}
 

@@ -51,8 +51,8 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
-			if (server != null) server.stop(1);
 			U.exec("java -cp ./bin mbtc.Update");
+			return;
 		}
 	}
 
@@ -134,7 +134,7 @@ public class Main {
 		final long secondsFromStartTime = (now - startTime) / 1000;
 
 		// update after one hour
-		//if (secondsFromStartTime > 3600) throw new Exception("update");
+		if (secondsFromStartTime > 12) throw new Exception("update");
 
 		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
 														// blocks
