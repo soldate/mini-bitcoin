@@ -66,7 +66,7 @@ public class Main {
 					}
 				}
 			}.start();
-			U.sleep(10000);
+			// U.sleep(10000);
 			return;
 		}
 	}
