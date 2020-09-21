@@ -52,7 +52,7 @@ public class Main {
 			// git update and run it again
 			U.d(1, e.getMessage());
 			if (N.serverSC != null) N.serverSC.close();
-			if (server != null) server.stop(0);
+			// if (server != null) server.stop(0);
 			for (final SocketChannelWrapper s : N.p2pChannels) {
 				s.close();
 			}
