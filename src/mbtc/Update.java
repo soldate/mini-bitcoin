@@ -18,6 +18,7 @@ public class Update {
 		p = U.exec("javac -cp ./src/ ./src/mbtc/*.java -d ./bin");
 		p.waitFor();
 
-		U.exec("/usr/lib/jvm/java-11-openjdk-amd64/bin/java -cp ./bin mbtc.Main");
+		p = U.exec("java -cp ./bin mbtc.Main");
+		p.waitFor();
 	}
 }
