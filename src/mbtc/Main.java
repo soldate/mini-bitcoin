@@ -6,6 +6,7 @@ import java.net.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.net.httpserver.*;
 
@@ -61,7 +62,7 @@ public class Main {
 				public void run() {
 					try {
 						final Process p = U.exec("./start-and-disconnect.sh");
-						p.waitFor();
+						p.waitFor(1, TimeUnit.SECONDS);
 						U.d(1, "FINIIIIIIIIISH");
 					} catch (final IOException | InterruptedException e) {
 						e.printStackTrace();
