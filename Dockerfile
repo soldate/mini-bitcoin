@@ -6,4 +6,4 @@ ADD https://www.unixtimestamp.com /tmp
 RUN git clone https://github.com/soldate/mini-bitcoin.git
 WORKDIR /mini-bitcoin
 RUN javac -cp ./src/ ./src/mbtc/*.java -d ./bin
-ENTRYPOINT /bin/bash java -cp ./bin mbtc.Main
+ENTRYPOINT java -cp ./bin mbtc.Main
