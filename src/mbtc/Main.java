@@ -60,13 +60,13 @@ public class Main {
 				@Override
 				public void run() {
 					try {
-						U.sleep(1000);
 						U.exec("java -cp ./bin mbtc.Update");
-					} catch (InterruptedException | IOException e) {
+					} catch (final IOException e) {
 						e.printStackTrace();
 					}
 				}
 			}.start();
+			U.sleep(10000);
 			return;
 		}
 	}
