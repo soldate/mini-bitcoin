@@ -51,9 +51,7 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
-			Runtime.getRuntime().exec("java -cp ./bin mbtc.Update");
-			System.exit(0);
-			return;
+			U.exec("java -cp ./bin mbtc.Update");
 		}
 	}
 
