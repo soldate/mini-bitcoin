@@ -6,7 +6,6 @@ import java.net.*;
 import java.security.*;
 import java.security.spec.*;
 import java.util.*;
-import java.util.concurrent.*;
 
 import com.sun.net.httpserver.*;
 
@@ -52,24 +51,8 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
-			if (N.serverSC != null) N.serverSC.close();
-			if (server != null) server.stop(0);
-			for (final SocketChannelWrapper s : N.p2pChannels) {
-				s.close();
-			}
-			new Thread() {
-				@Override
-				public void run() {
-					try {
-						final Process p = U.exec("./start-and-disconnect.sh");
-						p.waitFor(1, TimeUnit.SECONDS);
-						U.d(1, "FINIIIIIIIIISH");
-					} catch (final IOException | InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}.start();
-			// U.sleep(10000);
+			Runtime.getRuntime().exec("java -cp ./bin mbtc.Update");
+			System.exit(0);
 			return;
 		}
 	}

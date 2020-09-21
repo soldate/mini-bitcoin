@@ -18,7 +18,8 @@ public class Update {
 		p = U.exec("javac -cp ./src/ ./src/mbtc/*.java -d ./bin");
 		p.waitFor();
 
-		p = U.exec("java -cp ./bin mbtc.Main");
+		Runtime.getRuntime().exec("java -cp ./bin mbtc.Main");
+		System.exit(0);
 
 		U.d(1, "running again...");
 	}
