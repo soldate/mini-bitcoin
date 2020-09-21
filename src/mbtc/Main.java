@@ -60,7 +60,7 @@ public class Main {
 				@Override
 				public void run() {
 					try {
-						U.exec("java -cp ./bin mbtc.Update");
+						U.exec("./start-and-disconnect.sh");
 					} catch (final IOException e) {
 						e.printStackTrace();
 					}
