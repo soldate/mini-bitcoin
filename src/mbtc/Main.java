@@ -33,8 +33,6 @@ public class Main {
 
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
-			U.d(1, "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-
 			// read all blocks and create UTXO
 			B.loadBlockchain();
 
@@ -53,6 +51,12 @@ public class Main {
 		} catch (final Exception e) {
 			// git update and run it again
 			U.d(1, e.getMessage());
+			if (N.serverSC != null) N.serverSC.close();
+			if (server != null) server.stop(0);
+			for (final SocketChannelWrapper s : N.p2pChannels) {
+				s.close();
+			}
+			U.sleep(1000);
 			U.exec("java -cp ./bin mbtc.Update");
 			return;
 		}
