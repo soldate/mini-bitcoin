@@ -30,11 +30,7 @@ public class Main {
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) throws IOException, InterruptedException {
 		try {
-
 			U.logVerbosityLevel = 2; // 3 = very verbose
-
-			U.d(1, "DDDDDDDDDDDDDDDDDDDD");
-			U.sleep(5000);
 
 			// read all blocks and create UTXO
 			B.loadBlockchain();
