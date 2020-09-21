@@ -60,8 +60,10 @@ public class Main {
 				@Override
 				public void run() {
 					try {
-						U.exec("./start-and-disconnect.sh");
-					} catch (final IOException e) {
+						final Process p = U.exec("./start-and-disconnect.sh");
+						p.waitFor();
+						U.d(1, "FINIIIIIIIIISH");
+					} catch (final IOException | InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
