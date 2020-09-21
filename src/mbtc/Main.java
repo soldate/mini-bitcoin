@@ -56,8 +56,17 @@ public class Main {
 			for (final SocketChannelWrapper s : N.p2pChannels) {
 				s.close();
 			}
-			U.sleep(1000);
-			U.exec("java -cp ./bin mbtc.Update");
+			new Thread() {
+				@Override
+				public void run() {
+					try {
+						U.sleep(1000);
+						U.exec("java -cp ./bin mbtc.Update");
+					} catch (InterruptedException | IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}.start();
 			return;
 		}
 	}
