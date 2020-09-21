@@ -51,8 +51,7 @@ public class Main {
 			// git update and run it again
 			U.d(1, e.getMessage());
 			server.stop(1);
-			Update.main(null);
-			U.d(1, "FINISHIM MAIN");
+			U.exec("java -cp ./bin mbtc.Update");
 		}
 	}
 
