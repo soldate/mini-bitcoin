@@ -32,6 +32,9 @@ public class Main {
 		try {
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
+			U.d(1, "AAAAAAAAAAAAAAAAAAAAAAAAAA");
+			U.sleep(3000);
+
 			// read all blocks and create UTXO
 			B.loadBlockchain();
 
