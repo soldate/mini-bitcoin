@@ -33,7 +33,7 @@ public class Main {
 
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
-			U.d(1, "CCCCCCCCCCCCCCCCCCCCCCCCCC");
+			U.d(1, "DDDDDDDDDDDDDDDDDDDD");
 			U.sleep(5000);
 
 			// read all blocks and create UTXO
