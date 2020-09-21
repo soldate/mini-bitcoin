@@ -1,7 +1,6 @@
 package mbtc;
 
 import java.io.*;
-import java.lang.ProcessBuilder.*;
 import java.math.*;
 import java.nio.*;
 import java.nio.file.*;
@@ -76,8 +75,6 @@ class U {
 		Process p = null;
 		ProcessBuilder builder = null;
 		builder = new ProcessBuilder(new String[] { "/bin/bash", "-c", command });
-		builder.redirectInput(Redirect.INHERIT);
-		builder.redirectOutput(Redirect.INHERIT);
 		p = builder.inheritIO().start();
 		return p;
 	}
