@@ -31,6 +31,8 @@ public class Main {
 	public static void main(final String[] args) throws IOException, InterruptedException {
 		try {
 
+			U.d(1, "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
 			// read all blocks and create UTXO
