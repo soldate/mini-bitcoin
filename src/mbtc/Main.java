@@ -32,9 +32,6 @@ public class Main {
 		try {
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
-			U.d(1, "AAAAAAAAAAAAAAAAAAAAAAAAAA");
-			U.sleep(3000);
-
 			// read all blocks and create UTXO
 			B.loadBlockchain();
 
@@ -135,8 +132,8 @@ public class Main {
 		final long secondsFromLastRequest = (now - N.lastRequest) / 1000;
 		final long secondsFromStartTime = (now - startTime) / 1000;
 
-		// update after one hour
-		if (secondsFromStartTime > 12) throw new Exception("update");
+		// update after 4 hours
+		if (secondsFromStartTime > 14400) throw new Exception("update");
 
 		if (secondsFromLastBlock > 10 && !startMining) {// && N.amIConnected()) { // More than 10s without receive
 														// blocks
