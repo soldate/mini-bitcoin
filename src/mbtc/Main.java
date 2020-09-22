@@ -28,31 +28,23 @@ public class Main {
 	static HttpServer server;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
-	public static void main(final String[] args) throws IOException, InterruptedException {
-		try {
-			U.logVerbosityLevel = 2; // 3 = very verbose
+	public static void main(final String[] args) throws Exception {
+		U.logVerbosityLevel = 2; // 3 = very verbose
 
-			// read all blocks and create UTXO
-			B.loadBlockchain();
+		// read all blocks and create UTXO
+		B.loadBlockchain();
 
-			C.loadOrCreateKeyPair();
+		C.loadOrCreateKeyPair();
 
-			// p2p. config your server and connect to the seed nodes
-			N.configAsyncP2P();
+		// p2p. config your server and connect to the seed nodes
+		N.configAsyncP2P();
 
-			showMenuOptions();
+		showMenuOptions();
 
-			startHttpServer();
+		startHttpServer();
 
-			// "while(true)" inside
-			runForever();
-
-		} catch (final Exception e) {
-			// git update and run it again
-			U.d(1, e.getMessage());
-			server.stop(1);
-			Update.main(null);
-		}
+		// "while(true)" inside
+		runForever();
 	}
 
 	private static void mineALittleBit() throws IOException, InvalidKeyException, SignatureException,
