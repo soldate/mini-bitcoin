@@ -29,22 +29,28 @@ public class Main {
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
 	public static void main(final String[] args) throws Exception {
-		U.logVerbosityLevel = 2; // 3 = very verbose
+		try {
+			U.logVerbosityLevel = 2; // 3 = very verbose
 
-		// read all blocks and create UTXO
-		B.loadBlockchain();
+			// read all blocks and create UTXO
+			B.loadBlockchain();
 
-		C.loadOrCreateKeyPair();
+			C.loadOrCreateKeyPair();
 
-		// p2p. config your server and connect to the seed nodes
-		N.configAsyncP2P();
+			// p2p. config your server and connect to the seed nodes
+			N.configAsyncP2P();
 
-		showMenuOptions();
+			showMenuOptions();
 
-		startHttpServer();
+			startHttpServer();
 
-		// "while(true)" inside
-		runForever();
+			// "while(true)" inside
+			runForever();
+
+		} catch (final Exception e) {
+			U.d(1, e.getMessage());
+			System.exit(0);
+		}
 	}
 
 	private static void mineALittleBit() throws IOException, InvalidKeyException, SignatureException,
