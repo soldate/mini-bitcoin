@@ -35,6 +35,14 @@ Go to [http://localhost:8080](http://localhost:8080)
 
 That's it! :-D
 
+To stop, try
+
+```
+docker ps
+docker stop CONTAINER_ID
+```
+
+
 ## What is address?
 
 It's just a shortcut to the public key. Once your public key is on the blockchain, you will receive coins using small 

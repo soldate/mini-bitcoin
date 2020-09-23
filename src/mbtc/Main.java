@@ -28,7 +28,7 @@ public class Main {
 	static HttpServer server;
 
 	// load configurations (your keys, blockchain, p2p configs, menu) and then run
-	public static void main(final String[] args) throws IOException, InterruptedException {
+	public static void main(final String[] args) throws Exception {
 		try {
 			U.logVerbosityLevel = 2; // 3 = very verbose
 
@@ -48,10 +48,8 @@ public class Main {
 			runForever();
 
 		} catch (final Exception e) {
-			// git update and run it again
 			U.d(1, e.getMessage());
-			server.stop(1);
-			Update.main(null);
+			System.exit(0);
 		}
 	}
 
