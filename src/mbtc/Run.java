@@ -10,11 +10,11 @@ public class Run {
 
 		while (true) {
 			try {
-				p = exec("git fetch origin");
-				p.waitFor();
+				//p = exec("git fetch origin");
+				//p.waitFor();
 
-				p = exec("git reset --hard origin/master");
-				p.waitFor();
+				//p = exec("git reset --hard origin/master");
+				//p.waitFor();
 
 				p = exec("javac -cp ./src/ ./src/mbtc/*.java -d ./bin");
 				p.waitFor();
