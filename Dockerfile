@@ -1,9 +1,9 @@
 FROM openjdk:11
 MAINTAINER Marconi Soldate
-RUN apt update
-RUN apt install -y git
+RUN apt update && apt install -y git \
+&& rm -rf /var/lib/apt/lists/*
 ADD https://www.unixtimestamp.com /tmp
-RUN git clone https://github.com/soldate/mini-bitcoin.git
+COPY .classpath .project index.html start-mbtc.sh /mini-bitcoin/
+COPY ./src /mini-bitcoin/src
 WORKDIR /mini-bitcoin
-RUN javac -cp ./src/ ./src/mbtc/*.java -d ./bin
-ENTRYPOINT java -cp ./bin mbtc.Run
+ENTRYPOINT ["/mini-bitcoin/start-mbtc.sh"]
